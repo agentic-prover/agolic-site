@@ -1,0 +1,2063 @@
+<!doctype html>
+<html lang="en-GB" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>One example, many ways to test it · Agolic</title>
+<meta name="description" content="Agentic planning of symbolic-execution runs.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Agolic">
+<meta property="og:description" content="Agentic planning of symbolic-execution runs.">
+<meta property="og:url" content="https://agolic.aprover.ai/">
+<link rel="canonical" href="https://agolic.aprover.ai/">
+<link rel="icon" type="image/png" href="logo.png">
+<script>document.documentElement.className = 'js';try{if(localStorage.getItem('theme')==='dark')document.documentElement.setAttribute('data-theme','dark')}catch(e){}</script>
+<style>
+@font-face{font-family:"Agolic Display";src:url("fonts/funnel-display-latin.woff2") format("woff2");font-weight:400 800;font-style:normal;font-display:swap}
+@font-face{font-family:"Agolic Text";src:url("fonts/funnel-sans-latin.woff2") format("woff2");font-weight:100 900;font-style:normal;font-display:swap}
+:root{
+  --ground:#fff;--fg:#14213a;--fg2:#566377;--fg3:#3a4760;--hair:#e1e5ec;--band:#f3f5f8;--on:#fff;--sol-line:#ddcdec;--open:#10756a;
+  --hl:#ad1b98;--wash:#f0d6ec;--bug:#c43b46;--bug-bg:#fdf2f3;--ok:#27794a;
+  --sol:#6b3fa0;--sol-bg:#f2ebfa;--pale:#69727f;
+  --display:"Agolic Display",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --text:"Agolic Text",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+  --gutter:clamp(18px,4.2vw,60px);
+  --lh:18px;
+  color-scheme:light;
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+    --ground:#0e1625;--fg:#e9eef6;--fg2:#93a0b6;--fg3:#b9c4d6;--hair:#222e47;--band:#16213a;--on:#0e1625;
+    --hl:#e58bd9;--wash:#3a2340;--bug:#f0919a;--bug-bg:#351c22;--ok:#6fcf97;
+    --sol:#bb9be8;--sol-bg:#261e3e;--sol-line:#463768;--pale:#7f8ba3;--open:#54c7b6;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--ground);color:var(--fg);font-family:var(--text);font-size:17px;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:inherit}
+.wrap{width:min(1180px,calc(100% - 2 * var(--gutter)));margin-inline:auto}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+.mast{border-bottom:1px solid var(--hair)}
+.mast-in{display:flex;align-items:center;justify-content:space-between;gap:24px;height:64px}
+.brand{display:inline-flex;align-items:center;gap:11px;text-decoration:none;font-family:var(--display);font-weight:700;font-size:22px;letter-spacing:-.01em}
+.brand img{display:block}
+.mast-links{display:flex;align-items:center;gap:24px;font-size:14px;color:var(--fg2)}
+.theme-toggle{display:none;width:34px;height:32px;padding:0;align-items:center;justify-content:center;background:none;color:inherit;border:1px solid var(--hair);border-radius:6px;cursor:pointer}
+.js .theme-toggle{display:inline-flex}
+.theme-toggle svg{width:16px;height:16px;display:block}
+.theme-toggle .i-sun,[data-theme="dark"] .theme-toggle .i-moon{display:none}
+[data-theme="dark"] .theme-toggle .i-sun{display:block}
+.mast-links a{text-decoration:none}
+.mast-links a:hover{color:var(--fg);text-decoration:underline;text-underline-offset:3px}
+
+.sec{padding:clamp(42px,6vw,72px) 0 0}
+.kicker{font-size:12px;letter-spacing:.13em;text-transform:uppercase;color:var(--hl);font-weight:650;margin:0 0 14px}
+h1,h2,h3{font-family:var(--display);font-weight:700;letter-spacing:-.018em}
+h1{font-size:clamp(33px,5vw,56px);line-height:1.02;margin:0 0 16px;max-width:22ch;text-wrap:balance}
+.hbr{display:none}
+@media (min-width:600px){.hbr{display:inline}}
+.lede{font-size:clamp(17px,1.9vw,20px);line-height:1.42;color:var(--fg2);max-width:62ch;margin:0 0 clamp(24px,3.4vw,36px)}
+
+.picker{display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin:0 0 8px;position:relative}
+.picker > span{font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--fg2);font-weight:650;margin-right:5px}
+.picker button{font:inherit;font-size:13.5px;font-weight:600;line-height:1;padding:8px 12px;border:1px solid var(--hair);background:var(--ground);border-radius:999px;cursor:pointer;color:var(--fg);min-height:34px}
+.picker button:hover{border-color:var(--fg)}
+.picker button[aria-pressed="true"]{background:var(--fg);color:var(--on);border-color:var(--fg)}
+.picker button:focus-visible{outline:2px solid var(--hl);outline-offset:2px}
+.picker.tabs{gap:5px;margin:0 0 22px}
+.picker.tabs > span{flex:0 0 100%;margin:0 0 3px}
+.tab-in{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;margin:0;padding:0;border:0}
+.tab{font-size:12.5px;font-weight:600;line-height:1;padding:8px 9px;border:1px solid var(--hair);background:var(--ground);border-radius:999px;cursor:pointer;color:var(--fg);min-height:34px;display:inline-flex;align-items:center}
+.tab:hover{border-color:var(--fg)}
+.tab-in:checked + .tab{background:var(--fg);color:var(--on);border-color:var(--fg)}
+.tab-in:focus-visible + .tab{outline:2px solid var(--hl);outline-offset:2px}
+.no-js .picker{display:none}
+
+.puzzle{display:grid;grid-template-columns:1.04fr .96fr;gap:clamp(20px,3.4vw,44px);align-items:start;border-top:1px solid var(--fg);padding-top:22px}
+.puzzle > *{min-width:0}
+.card-label{font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--fg2);font-weight:650;margin:0 0 11px}
+.program{border:1px solid var(--hair);border-radius:8px;padding:17px 19px;overflow-x:auto;background:var(--ground)}
+.program pre{margin:0;font-family:var(--mono);font-size:clamp(9px,2.7vw,12.5px);line-height:1.7;tab-size:4}
+.c{color:#8b8b92}
+.s{color:#4b4b52}
+.try-card{background:var(--band);border-radius:8px;padding:17px 19px}
+.try-form{display:none;gap:7px;align-items:stretch;min-width:0}
+.js .try-form{display:flex}
+.try-form input{flex:1;min-width:0;font-family:var(--mono);font-size:18px;letter-spacing:.14em;padding:8px 11px;border:1px solid var(--hair);border-radius:5px;background:var(--ground);color:var(--fg)}
+.try-form input:focus-visible{outline:2px solid var(--hl);outline-offset:2px}
+.try-form input::placeholder{letter-spacing:0;color:#8a8a90}
+.try-form button{font:inherit;font-size:13.5px;font-weight:650;background:var(--hl);color:var(--on);border:0;border-radius:5px;padding:0 16px;cursor:pointer;min-height:42px}
+.try-form button:hover{background:var(--fg)}
+.try-form button:focus-visible{outline:2px solid var(--fg);outline-offset:2px}
+.result{margin-top:14px;min-height:40px}
+.result-line{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px;margin:0 0 9px}
+.result-code{font-family:var(--mono);font-size:15px;font-weight:650;letter-spacing:.08em}
+.result-msg{margin:0;font-size:14.5px;line-height:1.35;color:var(--fg)}
+.result-msg.bad{color:var(--bug)}
+.result-msg.good{color:var(--ok)}
+.run-strip{display:flex;flex-wrap:wrap;gap:5px;list-style:none;padding:0;margin:0}
+.run-strip li{font-size:10.5px;line-height:1;border:1px solid var(--hair);border-radius:999px;padding:5px 7px;color:var(--fg2);white-space:nowrap}
+.run-strip li.pass{background:var(--fg);border-color:var(--fg);color:var(--on)}
+.run-strip li.fail{background:var(--bug-bg);border-color:var(--bug);color:var(--bug)}
+@keyframes checkIn{from{opacity:.2}to{opacity:1}}
+.js.anim .run-strip li{animation:checkIn .18s ease both}
+.js.anim .run-strip li:nth-child(2){animation-delay:.06s}
+.js.anim .run-strip li:nth-child(3){animation-delay:.12s}
+.js.anim .run-strip li:nth-child(4){animation-delay:.18s}
+.js.anim .run-strip li:nth-child(5){animation-delay:.24s}
+.hint{font-size:12.5px;color:var(--fg2);margin:13px 0 0;max-width:42ch}
+.showme{font-size:12.5px;color:var(--fg2);margin:6px 0 0}
+.showme button{font:inherit;font-size:12px;font-weight:650;color:var(--hl);background:none;border:0;padding:2px 0;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.showme button:focus-visible{outline:2px solid var(--hl);outline-offset:2px}
+.pointdown{font-size:13px;margin:12px 0 0}
+.pointdown a{color:var(--hl);font-weight:600;text-decoration:none}
+.pointdown a:hover{text-decoration:underline;text-underline-offset:3px}
+.pointdown a:focus-visible{outline:2px solid var(--hl);outline-offset:2px}
+.pointdown .arw{font-size:15px;margin-right:3px}
+.plain{font-size:13px;color:var(--fg2);margin:12px 0 0}
+.nojs-hint{display:none;font-size:13px;color:var(--fg2);margin:12px 0 0}
+.no-js .nojs-hint{display:block}
+.no-js .result,.no-js .hint,.no-js .showme,.no-js .pointdown{display:none}
+
+.answers{margin-top:clamp(40px,6vw,68px);border-top:1px solid var(--hair);padding-top:26px}
+.answers-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 22px;margin:0 0 2px}
+.answers h2{font-size:clamp(23px,3vw,31px);margin:0}
+.tech{border-bottom:1px solid var(--hair);padding:clamp(22px,3.4vw,34px) 0}
+.js .tech{display:none}
+.js .tech.shown{display:block}
+.tech-head{display:flex;align-items:baseline;flex-wrap:wrap;gap:5px 14px;margin:0 0 7px}
+.tech-head h3{font-size:clamp(20px,2.3vw,26px);line-height:1.1;margin:0}
+.tool{font-size:12px;color:var(--fg2);margin:0}
+.tool span{text-transform:uppercase;letter-spacing:.1em;font-size:10px;margin-right:4px}
+.tool b{font-weight:600;color:var(--fg)}
+.tech-body{display:grid;grid-template-columns:minmax(0,.62fr) minmax(0,1.38fr);gap:clamp(16px,3.2vw,40px);align-items:start}
+.tech-text{min-width:0}
+.lead{font-size:clamp(16.5px,1.85vw,19px);line-height:1.3;margin:0;max-width:30ch}
+
+.viz{margin:0;min-width:0}
+.shot{border:1px solid var(--hair);border-radius:8px;padding:9px 11px 10px;background:var(--ground)}
+.shot-top{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin:0 0 7px;min-height:17px}
+.feed{display:inline-flex;flex-wrap:wrap;align-items:center;gap:5px;min-width:0}
+.tag{font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--fg2);font-weight:650}
+.chip{font-family:var(--mono);font-size:9.5px;letter-spacing:.04em;background:var(--fg);color:var(--on);border-radius:3px;padding:2px 5px;white-space:nowrap}
+.chip.mono{background:var(--ground);color:var(--fg2);border:1px solid var(--hair);font-family:var(--text);font-size:9px;letter-spacing:0;padding:2px 4px}
+.ruletext{font-size:9.5px;line-height:1.25;color:var(--fg2)}
+.expect{font-size:9px;color:var(--fg2)}
+.replay{display:none;margin-left:auto;font:inherit;font-size:9.5px;font-weight:650;letter-spacing:.03em;color:var(--hl);background:none;border:0;padding:2px 0;cursor:pointer;text-decoration:underline;text-underline-offset:2px;white-space:nowrap}
+.replay:hover{color:var(--fg)}
+.replay:focus-visible{outline:2px solid var(--hl);outline-offset:2px}
+.js.anim .replay{display:inline-block}
+
+.stage{display:grid;grid-template-columns:max-content minmax(108px,1fr);gap:7px;align-items:stretch;min-width:0;justify-content:start}
+.listing{position:relative;font-family:var(--mono);font-size:12px;line-height:var(--lh);counter-reset:line;min-width:0;overflow:hidden;transform:translateZ(0)}
+.ln{position:relative;height:var(--lh);line-height:var(--lh);white-space:pre;color:var(--pale);padding-left:20px}
+.ln::before{counter-increment:line;content:counter(line);position:absolute;left:0;width:14px;text-align:right;color:#cdcdd2;font-size:7.5px;line-height:var(--lh);transition:color .18s ease}
+.ln.on{color:var(--fg)}
+.ln.on::before{color:#8d8d95}
+.ln.new{background:var(--wash);color:var(--fg)}
+.ln.sol{background:var(--sol-bg);color:var(--sol);font-weight:700}
+.ln.bad{background:var(--bug-bg);color:var(--bug);font-weight:700}
+.ln.bad::before{color:var(--bug)}
+
+.side{position:relative;min-width:0;font-family:var(--mono);font-size:8.5px;line-height:1.2;color:var(--fg2)}
+.side-trunk{position:absolute;left:2px;top:calc(var(--lh) * .5);bottom:calc(var(--lh) * .5);width:1px;background:var(--hair)}
+.sitem{position:absolute;left:0;top:calc(var(--i) * var(--lh));height:var(--lh);display:flex;align-items:center;gap:3px;white-space:nowrap;opacity:0;transform:translateX(-3px);transition:opacity .2s ease,transform .2s ease;max-width:none}
+.sitem.on{opacity:1;transform:none}
+i.dot{display:block;width:5px;height:5px;border-radius:50%;background:var(--hl);flex:none}
+.sitem.leaf{font-family:var(--text);font-size:8px;letter-spacing:0;color:var(--fg2)}
+.sitem.leaf.range{font-size:7.5px}
+.sitem.askmark{font-family:var(--text);font-size:7px;letter-spacing:.06em;text-transform:uppercase;color:var(--on);background:var(--sol);border-radius:3px;padding:0 4px;height:13px}
+.sitem.cex{font-family:var(--mono);font-size:8px;color:var(--bug);background:var(--bug-bg);border:1px solid var(--bug);border-radius:3px;padding:0 3px;height:13px}
+.sitem.flipchip{font-family:var(--mono);font-size:8px;color:var(--sol);background:var(--sol-bg);border:1px solid var(--sol-line);border-radius:3px;padding:0 3px;height:13px}
+.sitem.docs{font-family:var(--text);font-size:7px;letter-spacing:0;color:var(--fg2);background:var(--band);border:1px solid var(--hair);border-radius:3px;padding:0 3px;height:13px}
+.sitem.lock{font-family:var(--text);font-size:7px;letter-spacing:.05em;text-transform:uppercase;color:var(--fg2);background:var(--ground);border:1px solid var(--hair);border-radius:3px;padding:0 3px;height:13px}
+.sitem.lock.open{color:var(--hl);background:var(--wash);border-color:var(--wash)}
+.sitem.shrink{font-family:var(--text);font-size:7px;letter-spacing:.02em;color:var(--sol);background:var(--sol-bg);border:1px solid var(--sol-line);border-radius:3px;padding:0 3px;height:13px}
+.now{position:absolute;left:0;top:calc(var(--i,0) * var(--lh));font-family:var(--mono);font-size:8.5px;letter-spacing:.03em;background:var(--fg);color:var(--on);border-radius:3px;padding:1px 4px;white-space:nowrap;opacity:0;transition:top .24s ease,opacity .15s ease}
+.now.on{opacity:1}
+.now.bad{background:var(--bug)}
+.marker{position:absolute;left:0;top:calc(var(--i,0) * var(--lh));font-family:var(--text);font-size:7.5px;font-weight:650;color:var(--on);background:var(--sol);border-radius:3px;padding:1px 4px;white-space:nowrap;opacity:0;transition:top .4s ease,opacity .18s ease}
+.marker.on{opacity:1}
+.marker::before{content:"\2191\00a0"}
+
+/* Your own card */
+.shot-custom{--idea-ink:var(--fg3);max-width:none;container-type:inline-size;container-name:customshot}
+.viz[data-viz="custom"]{max-width:none}
+.viz[data-viz="custom"] .shot-custom{max-width:none}
+.stage.custom{position:relative;display:block;overflow:hidden;min-height:0}
+.listing-wrap{position:relative;min-width:0;width:max-content;max-width:100%}
+.listing-wrap .listing{position:relative;z-index:1}
+.shot-custom .listing{padding-top:calc(var(--lh) * .6);padding-right:24px}
+.shot-custom .ln{padding-left:32px}
+.shot-custom .ln::before{width:18px}
+.fb-dot{display:inline-block;width:4.5px;height:4.5px;margin-left:6px;border:1px solid var(--open);border-radius:50%;vertical-align:middle}
+.js .fb-dot{display:none}
+.fb-curl{display:inline-block;width:32px;height:17px;margin-left:4px;vertical-align:middle;overflow:visible}
+.js .fb-curl{display:none}
+.sketch{position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none;z-index:3}
+.sketch-fallback{display:none;position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none;z-index:2}
+.idea-path{fill:none;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke;stroke-width:1.55;opacity:.88;transition:stroke-dashoffset .9s ease}
+.idea-open{stroke-dasharray:3 4.2;opacity:0;transition:opacity 1.1s ease}
+.idea-open.on{opacity:.9}
+.idea-dot{fill:var(--ground);stroke:var(--open);stroke-width:1.35;opacity:0;transition:opacity .45s ease;vector-effect:non-scaling-stroke}
+.idea-dot.on{opacity:1}
+.ln.tint{background:color-mix(in srgb,var(--open) 6%,transparent)}
+.ln.wash{animation:lineWash 1.7s ease-out both}
+@keyframes lineWash{0%{background:rgba(107,63,160,.15)}100%{background:color-mix(in srgb,var(--open) 6%,transparent)}}
+.ideas{position:relative;z-index:4;min-width:0;padding:16px 0 26px 12px;font-family:var(--text);font-weight:500;color:var(--idea-ink)}
+.idea{position:relative;margin:0 0 9px;padding:0;font-size:12.5px;line-height:1.34;transition:font-size .5s ease,color .5s ease}
+.idea:last-child{margin-bottom:0}
+.idea-say{display:inline}
+.idea.live{font-size:14.5px;color:var(--fg)}
+.idea.last{font-family:var(--display);font-size:20px;line-height:1.16;font-weight:600;letter-spacing:-.012em;color:var(--fg);isolation:isolate;width:max-content;max-width:100%}
+.idea.last::before{content:"";position:absolute;left:-16%;top:-56%;width:132%;height:212%;z-index:-1;pointer-events:none;border-radius:50%;filter:blur(1px);opacity:.72;transform:scale(1);transition:opacity 1s ease,transform 1s ease;background:radial-gradient(closest-side,rgba(173,27,152,.13),rgba(107,63,160,.07) 55%,rgba(16,117,106,0) 100%)}
+.idea.last.pre::before{opacity:0;transform:scale(.72)}
+.idea.last.bloom::before{animation:glowBloom 1.2s ease-out both}
+@keyframes glowBloom{0%{opacity:0;transform:scale(.72)}40%{opacity:.92;transform:scale(1.06)}100%{opacity:.72;transform:scale(1)}}
+.idea-sizer{display:block}
+.idea-live{display:none}
+.js .idea-sizer{visibility:hidden}
+.js .idea-live{display:block;position:absolute;left:0;right:0;top:0;white-space:nowrap}
+.js .idea.last .idea-live{white-space:normal}
+.caret{display:inline-block;width:2px;height:1.02em;margin-left:2px;vertical-align:-.14em;border-radius:1px;background:var(--hl);opacity:1}
+.js .caret{opacity:0}
+.caret.on{opacity:1}
+.caret.blink{animation:caretBlink .62s linear 3}
+@keyframes caretBlink{0%,45%{opacity:1}46%,90%{opacity:0}91%,100%{opacity:1}}
+.shot-custom .shot-note{font-size:11.5px;line-height:1.35;color:var(--fg3);margin-top:9px;min-height:0}
+
+@container customshot (min-width:724px){
+  .stage.custom{min-height:250px}
+  .ideas{position:absolute;inset:0;padding:0;pointer-events:none}
+  .idea{position:absolute;margin:0;font-size:12.5px}
+  .idea.live{font-size:14.5px}
+  .idea:nth-child(1){left:356px;top:22px}
+  .idea:nth-child(2){left:470px;top:62px}
+  .idea:nth-child(3){left:400px;top:102px}
+  .idea.last{left:292px;top:168px;font-size:22px}
+  .fb-curl{width:96px;height:30px}
+  .no-js .sketch-fallback{display:block}
+  .no-js .fb-curl{display:none}
+}
+
+.pool{display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin-top:5px;min-height:16px;font-size:7.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--fg2)}
+.pool-label{flex-basis:100%}
+.pool .chip{font-family:var(--mono);font-size:8px;letter-spacing:.03em;background:var(--ground);color:var(--fg);border:1px solid var(--hair);border-radius:3px;padding:0 3px;text-transform:none}
+.pool .chip.bad{border-color:var(--bug);color:var(--bug)}
+.crashgroup{display:inline-flex;align-items:center;gap:4px;margin-left:4px}
+.pool-crash{margin-left:0}
+.shot-note{font-size:10px;line-height:1.3;color:var(--fg2);margin:6px 0 0;min-height:13px}
+
+.close{margin-top:clamp(40px,6vw,68px);border-top:1px solid var(--fg);padding:clamp(28px,4vw,40px) 0 54px}
+.close h2{font-size:clamp(26px,3.4vw,38px);line-height:1.06;margin:0 0 12px;max-width:20ch}
+.close p{font-size:clamp(16px,1.8vw,18px);color:var(--fg3);max-width:64ch;margin:0 0 18px}
+.paper{font-size:13.5px;color:var(--fg2);margin:0;display:flex;flex-wrap:wrap;gap:8px 24px}
+.paper a{color:var(--fg);text-underline-offset:3px}
+.foot{border-top:1px solid var(--hair);padding:20px 0 34px;font-size:12.5px;color:var(--fg2)}
+
+@media (max-width:879px){
+  .puzzle{grid-template-columns:1fr}
+  .tech-body{grid-template-columns:1fr;gap:12px}
+  .lead{max-width:36ch}
+}
+@media (max-width:519px){
+  :root{--lh:14px}
+  body{font-size:16px}
+  .mast-in{height:58px}
+  .mast-links{gap:15px;font-size:13px}
+  .brand{font-size:20px}
+  .brand img{width:31px;height:34px}
+  .program{padding:13px 11px}
+  .try-card{padding:15px 14px}
+  .stage{grid-template-columns:minmax(0,1fr) 58px}
+  .shot-custom{--lh:16px}
+  .shot-custom .listing{font-size:11px;padding-right:18px}
+  .shot-custom .ln{padding-left:28px}
+  .shot-custom .ln::before{width:16px}
+  .shot-custom .idea-path:not(.idea-open){stroke-width:1.45;opacity:.82}
+  .idea{margin-bottom:7px}
+  .listing{font-size:9px}
+  .ln{padding-left:18px}
+  .ln::before{width:13px;font-size:7px}
+  .side{font-size:7px}
+  .now{font-size:8px}
+  .sitem.leaf{font-size:7px}
+  .sitem.leaf.range{font-size:6.5px}
+  .sitem.docs,.sitem.lock{font-size:6.5px}
+  .shot{padding:8px 9px 9px}
+  .viz{padding:0}
+  .shot-note{font-size:9.5px}
+  .fa-wide{display:none}
+  .fa-narrow{display:inline}
+}
+
+/* The seven technique cards fill their column and everything inside grows together. */
+@media (min-width:640px){.shot:not(.shot-custom){zoom:1.25}}
+@media (min-width:880px){.shot:not(.shot-custom){zoom:1.2}}
+@media (min-width:1100px){.shot:not(.shot-custom){zoom:1.4}}
+
+@media (max-width:359px){
+  .shot-custom .idea.live{font-size:12.5px}
+}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none !important;transition:none !important}
+  html{scroll-behavior:auto}
+}
+.no-js .replay{display:none}
+</style>
+</head>
+<body>
+<header class="mast">
+  <div class="wrap mast-in">
+    <a class="brand" href="#" aria-label="Agolic home">
+      <img src="logo.png" width="35" height="38" alt="">
+      <span>Agolic</span>
+    </a>
+    <nav class="mast-links" aria-label="Elsewhere">
+      <a href="https://agent-software-testing.aprover.ai/" rel="noopener">Data</a>
+      <a href="https://arxiv.org/abs/2608.06397" rel="noopener">Paper</a>
+      <button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch between light and dark"><svg class="i-moon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M13.2 9.6A5.6 5.6 0 0 1 6.4 2.8a5.6 5.6 0 1 0 6.8 6.8Z"/></svg><svg class="i-sun" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="3"/><path d="M8 1.5v1.5M8 13v1.5M1.5 8H3M13 8h1.5M3.4 3.4l1 1M11.6 11.6l1 1M3.4 12.6l1-1M11.6 4.4l1-1"/></svg></button>
+    </nav>
+  </div>
+</header>
+
+<main>
+<section class="sec" aria-labelledby="puzzle-h">
+  <div class="wrap">
+    <p class="kicker">How Agolic tests your program</p>
+    <h1 id="puzzle-h">Even a simple program<br class="hbr"> can hide a bug.</h1>
+    <p class="lede">This example checks a four-character input and one input crashes it. Find it, then see how Agolic looks for it with each technique.</p>
+
+    <div class="picker programs" role="group" aria-labelledby="picker-label">
+      <span id="picker-label">Your program</span>
+      <button type="button" data-target="c" aria-pressed="true">C</button>
+      <button type="button" data-target="cpp" aria-pressed="false">C++</button>
+      <button type="button" data-target="rust" aria-pressed="false">Rust</button>
+      <button type="button" data-target="go" aria-pressed="false">Go</button>
+      <button type="button" data-target="python" aria-pressed="false">Python</button>
+      <button type="button" data-target="java" aria-pressed="false">Java</button>
+      <button type="button" data-target="binary" aria-pressed="false">Binary (no source)</button>
+    </div>
+    <p class="sr-only" id="pick-live" aria-live="polite"></p>
+    <p class="sr-only" id="tech-live" aria-live="polite"></p>
+
+    <div class="puzzle">
+      <div class="program">
+        <p class="card-label">The program</p>
+<pre><code id="code-view"><span class="c">/* rows[1] to rows[40] hold the rows */</span>
+const char *lookup(const char *input) {
+    if (strlen(input) != 4)
+        return <span class="s">"invalid input"</span>;
+    if (input[0] != <span class="s">'A'</span> || input[1] != <span class="s">'7'</span>)
+        return <span class="s">"invalid input"</span>;
+    if (input[2] &lt; <span class="s">'0'</span> || input[2] &gt; <span class="s">'9'</span> ||
+        input[3] &lt; <span class="s">'0'</span> || input[3] &gt; <span class="s">'9'</span>)
+        return <span class="s">"invalid input"</span>;
+    int n = (input[2] - <span class="s">'0'</span>) * 10
+          + (input[3] - <span class="s">'0'</span>);
+    if (n &gt; 40)
+        return <span class="s">"out of range"</span>;
+    return rows[n]-&gt;text;
+}</code></pre>
+      </div>
+
+      <div>
+        <div class="try-card" id="try-card">
+          <p class="card-label">Try an input</p>
+          <form class="try-form" novalidate>
+            <label class="sr-only" for="code-input">A four-character input</label>
+            <input id="code-input" name="input" type="text" placeholder="A7__" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="8" aria-describedby="try-hint">
+            <button type="submit">Try</button>
+          </form>
+          <div class="result" id="result" aria-live="off">
+            <div class="result-line"><code class="result-code" id="result-code">····</code><p class="result-msg" id="result-msg">Type a four-character input.</p></div>
+            <ol class="run-strip" id="run-strip" aria-hidden="true">
+              <li>4 chars</li><li>A7</li><li>digits</li><li>≤ 40</li><li>table</li>
+            </ol>
+          </div>
+          <p class="hint" id="try-hint">The program says which check stopped you.</p>
+          <p class="showme" id="showme" hidden>Stuck? <button type="button" id="showme-btn">Show me</button></p>
+          <p class="pointdown" id="pointdown" hidden><a href="#answers-h"><span class="arw" aria-hidden="true">↓</span>See the techniques below</a></p>
+          <p class="nojs-hint">The try box needs JavaScript. A712 returns row 12.</p>
+        </div>
+        <p class="plain">Four checks, then a lookup.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="answers" aria-labelledby="answers-h">
+  <div class="wrap">
+    <div class="answers-head"><h2 id="answers-h">The techniques</h2></div>
+    <div class="picker tabs" id="tech-tabs" role="radiogroup" aria-labelledby="tech-tabs-label">
+      <span id="tech-tabs-label">The technique</span>
+    </div>
+
+    <article class="tech" data-tech="symbolic" aria-labelledby="t-symbolic">
+      <div class="tech-head"><h3 id="t-symbolic">Symbolic execution</h3><p class="tool"><span>Tool</span> <b data-tool>KLEE</b></p></div>
+      <div class="tech-body">
+        <div class="tech-text"><p class="lead">Leave the input open and follow every path at once.</p></div>
+        <figure class="viz" data-viz="symbolic" aria-label="The listing splits at each check. One side leaves with invalid input or out of range. At the lookup a solver writes A700 and turns the line red">
+          <div class="shot">
+            <div class="shot-top"><span class="feed" data-feed aria-hidden="true"><span class="tag">solver writes</span><span class="chip">A700</span></span><button class="replay" type="button" data-replay>Play again</button></div>
+            <div class="stage">
+              <div class="listing" data-listing aria-hidden="true">
+<div class="ln on" data-role="sig">lookup(input) {</div>
+<div class="ln on" data-role="len">  if strlen(input) != 4</div>
+<div class="ln on" data-role="lenret">    return "invalid input";</div>
+<div class="ln on" data-role="prefix">  if input[0..1] != "A7"</div>
+<div class="ln on" data-role="prefixret">    return "invalid input";</div>
+<div class="ln on" data-role="digits">  if input[2..3] not digits</div>
+<div class="ln on" data-role="digitsret">    return "invalid input";</div>
+<div class="ln on" data-role="parse">  n = input[2..3] as a number;</div>
+<div class="ln on" data-role="bound">  if n &gt; 40</div>
+<div class="ln on" data-role="boundret">    return "out of range";</div>
+<div class="ln on bad" data-role="lookup">  return rows[n]-&gt;text;</div>
+<div class="ln on" data-role="end">}</div>
+              </div>
+              <div class="side" data-side aria-hidden="true">
+<span class="side-trunk"></span>
+<span class="sitem leaf on" data-for="len" style="--i:1"><i class="dot"></i>invalid input</span>
+<span class="sitem leaf on" data-for="prefix" style="--i:3"><i class="dot"></i>invalid input</span>
+<span class="sitem leaf on" data-for="digits" style="--i:5"><i class="dot"></i>invalid input</span>
+<span class="sitem leaf range on" data-for="bound" style="--i:8"><i class="dot"></i>out of range</span>
+<span class="sitem cex on" data-for="lookup" style="--i:10">A700</span>
+              </div>
+            </div>
+            <p class="shot-note" data-note>A solver works out A700. Row 0 is not in the table, so it crashes.</p>
+          </div>
+        </figure>
+      </div>
+    </article>
+
+    <article class="tech" data-tech="fuzzing" aria-labelledby="t-fuzzing">
+      <div class="tech-head"><h3 id="t-fuzzing">Coverage-guided fuzzing</h3><p class="tool"><span>Tool</span> <b data-tool>AFL++</b></p></div>
+      <div class="tech-body">
+        <div class="tech-text"><p class="lead">Change inputs at random and keep the ones that reach new lines.</p></div>
+        <figure class="viz" data-viz="fuzzing" aria-label="Six inputs light the listing one at a time, the covered part grows, the kept inputs collect and A700 turns the lookup red">
+          <div class="shot">
+            <div class="shot-top"><span class="feed" data-feed aria-hidden="true"><span class="tag">input</span><span class="chip">A700</span></span><button class="replay" type="button" data-replay>Play again</button></div>
+            <div class="stage">
+              <div class="listing" data-listing aria-hidden="true">
+<div class="ln on" data-role="sig">lookup(input) {</div>
+<div class="ln on" data-role="len">  if strlen(input) != 4</div>
+<div class="ln on" data-role="lenret">    return "invalid input";</div>
+<div class="ln on" data-role="prefix">  if input[0..1] != "A7"</div>
+<div class="ln on" data-role="prefixret">    return "invalid input";</div>
+<div class="ln on" data-role="digits">  if input[2..3] not digits</div>
+<div class="ln on" data-role="digitsret">    return "invalid input";</div>
+<div class="ln on" data-role="parse">  n = input[2..3] as a number;</div>
+<div class="ln on" data-role="bound">  if n &gt; 40</div>
+<div class="ln on" data-role="boundret">    return "out of range";</div>
+<div class="ln on bad" data-role="lookup">  return rows[n]-&gt;text;</div>
+<div class="ln on" data-role="end">}</div>
+              </div>
+              <div class="side" data-side aria-hidden="true"><span class="now bad on" data-now style="--i:10">A700</span></div>
+            </div>
+            <div class="pool" data-pool aria-hidden="true"><span class="pool-label">inputs kept, because each reached new lines</span><span class="chip">HH12</span><span class="chip">A71</span><span class="chip">A7X9</span><span class="chip">A741</span><span class="chip">A709</span><span class="crashgroup"><span class="pool-crash">crash saved</span><span class="chip bad">A700</span></span></div>
+            <p class="shot-note" data-note>A700 reaches the last line and it crashes.</p>
+          </div>
+        </figure>
+      </div>
+    </article>
+
+    <article class="tech" data-tech="concolic" aria-labelledby="t-concolic">
+      <div class="tech-head"><h3 id="t-concolic">Concolic execution</h3><p class="tool"><span>Tool</span> <b data-tool>SymCC</b></p></div>
+      <div class="tech-body">
+        <div class="tech-text"><p class="lead">Run a seed, then go back and flip one branch at a time.</p></div>
+        <figure class="viz" data-viz="concolic" aria-label="A712 runs down the listing, then a marker climbs back through the checks and flips them, with the new inputs beside the lines, then flips A789 back and the solver picked A700, which turns the lookup red">
+          <div class="shot">
+            <div class="shot-top"><span class="feed" data-feed aria-hidden="true"><span class="tag">run</span><span class="chip">A700</span></span><button class="replay" type="button" data-replay>Play again</button></div>
+            <div class="stage">
+              <div class="listing" data-listing aria-hidden="true">
+<div class="ln on" data-role="sig">lookup(input) {</div>
+<div class="ln on" data-role="len">  if strlen(input) != 4</div>
+<div class="ln" data-role="lenret">    return "invalid input";</div>
+<div class="ln on" data-role="prefix">  if input[0..1] != "A7"</div>
+<div class="ln" data-role="prefixret">    return "invalid input";</div>
+<div class="ln on" data-role="digits">  if input[2..3] not digits</div>
+<div class="ln" data-role="digitsret">    return "invalid input";</div>
+<div class="ln on" data-role="parse">  n = input[2..3] as a number;</div>
+<div class="ln on" data-role="bound">  if n &gt; 40</div>
+<div class="ln" data-role="boundret">    return "out of range";</div>
+<div class="ln on bad" data-role="lookup">  return rows[n]-&gt;text;</div>
+<div class="ln" data-role="end">}</div>
+              </div>
+              <div class="side" data-side aria-hidden="true">
+<span class="sitem flipchip on" data-for="prefix" style="--i:3">B712</span>
+<span class="sitem flipchip on" data-for="digits" style="--i:5">A7X2</span>
+<span class="sitem flipchip on" data-for="bound" style="--i:8">A789</span>
+<span class="sitem cex on" data-for="lookup" style="--i:10">A700</span>
+<span class="marker" data-marker>other branch</span>
+              </div>
+            </div>
+            <p class="shot-note" data-note>On the second round the solver picked 00 and A700 crashed.</p>
+          </div>
+        </figure>
+      </div>
+    </article>
+
+    <article class="tech" data-tech="hybrid" aria-labelledby="t-hybrid">
+      <div class="tech-head"><h3 id="t-hybrid">Hybrid fuzzing</h3><p class="tool"><span>Tool</span> <b data-tool>AFL++ with SymCC</b></p></div>
+      <div class="tech-body">
+        <div class="tech-text"><p class="lead">The fuzzer explores and a solver writes inputs that pass the checks.</p></div>
+        <figure class="viz" data-viz="hybrid" aria-label="Fuzzer inputs stop at the A7 line, a solver writes A712 past that check, then the fuzzer changes A712 until it reaches A700 and the lookup turns red">
+          <div class="shot">
+            <div class="shot-top"><span class="feed" data-feed aria-hidden="true"><span class="tag">fuzzer</span><span class="chip">A700</span></span><button class="replay" type="button" data-replay>Play again</button></div>
+            <div class="stage">
+              <div class="listing" data-listing aria-hidden="true">
+<div class="ln on" data-role="sig">lookup(input) {</div>
+<div class="ln on" data-role="len">  if strlen(input) != 4</div>
+<div class="ln" data-role="lenret">    return "invalid input";</div>
+<div class="ln on" data-role="prefix">  if input[0..1] != "A7"</div>
+<div class="ln" data-role="prefixret">    return "invalid input";</div>
+<div class="ln on" data-role="digits">  if input[2..3] not digits</div>
+<div class="ln" data-role="digitsret">    return "invalid input";</div>
+<div class="ln on" data-role="parse">  n = input[2..3] as a number;</div>
+<div class="ln on" data-role="bound">  if n &gt; 40</div>
+<div class="ln" data-role="boundret">    return "out of range";</div>
+<div class="ln on bad" data-role="lookup">  return rows[n]-&gt;text;</div>
+<div class="ln" data-role="end">}</div>
+              </div>
+              <div class="side" data-side aria-hidden="true">
+<span class="sitem lock open on" data-lock style="--i:3">solved</span>
+<span class="now bad on" data-now style="--i:10">found A700</span>
+              </div>
+            </div>
+            <p class="shot-note" data-note>The solver wrote A712 and the fuzzer found A700.</p>
+          </div>
+        </figure>
+      </div>
+    </article>
+
+    <article class="tech" data-tech="bounded" aria-labelledby="t-bounded">
+      <div class="tech-head"><h3 id="t-bounded">Bounded model checking</h3><p class="tool"><span>Tool</span> <b data-tool>CBMC</b></p></div>
+      <div class="tech-body">
+        <div class="tech-text"><p class="lead">Cover every input with one formula, then ask the solver.</p></div>
+        <figure class="viz" data-viz="bounded" aria-label="Every line lights at once, the tool asks the solver whether the lookup can crash and the answer is the counterexample A700">
+          <div class="shot">
+            <div class="shot-top"><span class="feed" data-feed aria-hidden="true"><span class="tag">inputs</span><span class="chip mono">every input at once</span><span class="chip mono">loops unrolled to a set limit</span></span><button class="replay" type="button" data-replay>Play again</button></div>
+            <div class="stage">
+              <div class="listing" data-listing aria-hidden="true">
+<div class="ln on" data-role="sig">lookup(input) {</div>
+<div class="ln on" data-role="len">  if strlen(input) != 4</div>
+<div class="ln on" data-role="lenret">    return "invalid input";</div>
+<div class="ln on" data-role="prefix">  if input[0..1] != "A7"</div>
+<div class="ln on" data-role="prefixret">    return "invalid input";</div>
+<div class="ln on" data-role="digits">  if input[2..3] not digits</div>
+<div class="ln on" data-role="digitsret">    return "invalid input";</div>
+<div class="ln on" data-role="parse">  n = input[2..3] as a number;</div>
+<div class="ln on" data-role="bound">  if n &gt; 40</div>
+<div class="ln on" data-role="boundret">    return "out of range";</div>
+<div class="ln on bad" data-role="lookup">  return rows[n]-&gt;text;</div>
+<div class="ln on" data-role="end">}</div>
+              </div>
+              <div class="side" data-side aria-hidden="true"><span class="sitem cex on" data-for="lookup" style="--i:10">A700</span></div>
+            </div>
+            <p class="shot-note" data-note>Can the lookup ever crash? Yes, A700 does.</p>
+          </div>
+        </figure>
+      </div>
+    </article>
+
+    <article class="tech" data-tech="property" aria-labelledby="t-property">
+      <div class="tech-head"><h3 id="t-property">Property-based testing</h3><p class="tool"><span>Tool</span> <b data-tool>theft</b></p></div>
+      <div class="tech-body">
+        <div class="tech-text"><p class="lead">Write a rule and a generator, then look for a counterexample.</p></div>
+        <figure class="viz" data-viz="property" aria-label="Generated inputs run down the listing, A700 fails at the lookup and breaks the rule">
+          <div class="shot">
+            <div class="shot-top"><span class="feed" data-feed aria-hidden="true"><span class="tag">rule</span><span class="ruletext">No input shaped A7 and two digits crashes.</span></span><button class="replay" type="button" data-replay>Play again</button></div>
+            <div class="stage">
+              <div class="listing" data-listing aria-hidden="true">
+<div class="ln on" data-role="sig">lookup(input) {</div>
+<div class="ln on" data-role="len">  if strlen(input) != 4</div>
+<div class="ln" data-role="lenret">    return "invalid input";</div>
+<div class="ln on" data-role="prefix">  if input[0..1] != "A7"</div>
+<div class="ln" data-role="prefixret">    return "invalid input";</div>
+<div class="ln on" data-role="digits">  if input[2..3] not digits</div>
+<div class="ln" data-role="digitsret">    return "invalid input";</div>
+<div class="ln on" data-role="parse">  n = input[2..3] as a number;</div>
+<div class="ln on" data-role="bound">  if n &gt; 40</div>
+<div class="ln" data-role="boundret">    return "out of range";</div>
+<div class="ln on bad" data-role="lookup">  return rows[n]-&gt;text;</div>
+<div class="ln" data-role="end">}</div>
+              </div>
+              <div class="side" data-side aria-hidden="true"><span class="sitem shrink on" data-for="lookup" style="--i:10">A700 breaks rule</span></div>
+            </div>
+            <p class="shot-note" data-note>A700 breaks the rule.</p>
+          </div>
+        </figure>
+      </div>
+    </article>
+
+    <article class="tech" data-tech="generated" aria-labelledby="t-generated">
+      <div class="tech-head"><h3 id="t-generated">Generated tests</h3><p class="tool"><span>Tool</span> <b data-tool>Agolic (built in)</b></p></div>
+      <div class="tech-body">
+        <div class="tech-text"><p class="lead">Read the source and docs, then write the test.</p></div>
+        <figure class="viz" data-viz="generated" aria-label="The docs say rows 1 to 40 beside the bound check, then the test input A700 runs into the lookup and crashes">
+          <div class="shot">
+            <div class="shot-top"><span class="feed" data-feed aria-hidden="true"><span class="tag">generated test</span><span class="chip">A700</span><span class="expect">expects out of range</span></span><button class="replay" type="button" data-replay>Play again</button></div>
+            <div class="stage">
+              <div class="listing" data-listing aria-hidden="true">
+<div class="ln on" data-role="sig">lookup(input) {</div>
+<div class="ln on" data-role="len">  if strlen(input) != 4</div>
+<div class="ln" data-role="lenret">    return "invalid input";</div>
+<div class="ln on" data-role="prefix">  if input[0..1] != "A7"</div>
+<div class="ln" data-role="prefixret">    return "invalid input";</div>
+<div class="ln on" data-role="digits">  if input[2..3] not digits</div>
+<div class="ln" data-role="digitsret">    return "invalid input";</div>
+<div class="ln on" data-role="parse">  n = input[2..3] as a number;</div>
+<div class="ln on" data-role="bound">  if n &gt; 40</div>
+<div class="ln" data-role="boundret">    return "out of range";</div>
+<div class="ln on bad" data-role="lookup">  return rows[n]-&gt;text;</div>
+<div class="ln" data-role="end">}</div>
+              </div>
+              <div class="side" data-side aria-hidden="true">
+<span class="sitem docs on" data-for="bound" style="--i:8">docs say rows 1 to 40</span>
+<span class="sitem cex on" data-for="lookup" style="--i:10">test fails</span>
+              </div>
+            </div>
+            <p class="shot-note" data-note>The docs say rows 1 to 40. The test expects out of range and gets a crash, so the test fails.</p>
+          </div>
+        </figure>
+      </div>
+    </article>
+
+    <article class="tech" id="your-own" data-tech="custom" aria-labelledby="t-custom">
+      <div class="tech-head"><h3 id="t-custom">Your own</h3></div>
+      <div class="tech-body">
+        <div class="tech-text"><p class="lead">Build your own tool with Agolic.</p></div>
+        <figure class="viz" data-viz="custom" aria-label="Four ideas sit in the open space beside a pale listing, three reaching the lines they touch and the last trailing off into space with a caret beside it, for C programs.">
+          <div class="shot shot-custom">
+            <div class="shot-top"><span class="feed" data-feed aria-hidden="true"><span class="tag">program</span><span class="chip mono" data-custom-target>for C programs</span></span><button class="replay" type="button" data-replay>Play again</button></div>
+            <div class="stage custom">
+              <div class="listing-wrap">
+                <div class="listing" data-listing aria-hidden="true">
+<div class="ln tint" data-role="sig">lookup(input) {<span class="fb-dot"></span></div>
+<div class="ln tint" data-role="len">  if strlen(input) != 4<span class="fb-dot"></span></div>
+<div class="ln" data-role="lenret">    return "invalid input";</div>
+<div class="ln tint" data-role="prefix">  if input[0..1] != "A7"<span class="fb-dot"></span></div>
+<div class="ln" data-role="prefixret">    return "invalid input";</div>
+<div class="ln tint" data-role="digits">  if input[2..3] not digits<span class="fb-dot"></span></div>
+<div class="ln" data-role="digitsret">    return "invalid input";</div>
+<div class="ln" data-role="parse">  n = input[2..3] as a number;</div>
+<div class="ln tint" data-role="bound">  if n &gt; 40<span class="fb-dot"></span></div>
+<div class="ln" data-role="boundret">    return "out of range";</div>
+<div class="ln" data-role="lookup">  return rows[n]-&gt;text;</div>
+<div class="ln" data-role="end">}</div>
+                </div>
+              </div>
+              <svg class="sketch-fallback" viewBox="0 0 763 250" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+                <defs>
+                  <linearGradient id="fbThread" gradientUnits="userSpaceOnUse" x1="656" y1="0" x2="96" y2="0">
+                    <stop offset="0" stop-color="#ad1b98"/><stop offset=".52" stop-color="#6b3fa0"/><stop offset="1" stop-color="#10756a"/>
+                  </linearGradient>
+                  <linearGradient id="fbOpen" gradientUnits="userSpaceOnUse" x1="589" y1="180" x2="753" y2="206">
+                    <stop offset="0" stop-color="#ad1b98"/><stop offset=".55" stop-color="#6b3fa0"/><stop offset=".85" stop-color="#10756a"/>
+                    <stop offset="1" stop-color="#10756a" stop-opacity="0"/>
+                  </linearGradient>
+                </defs>
+                <path class="idea-path" stroke="url(#fbThread)" d="M351 30 C 309.85 30, 304.23 91.8, 263.08 91.8"/>
+                <path class="idea-path" stroke="url(#fbThread)" d="M263.08 91.8 C 242.08 91.8, 229.39 73.8, 212.39 73.8"/>
+                <path class="idea-path" stroke="url(#fbThread)" d="M263.08 91.8 C 242.08 91.8, 245.08 109.8, 234.08 109.8"/>
+                <path class="idea-path" stroke="url(#fbThread)" d="M465 70 C 326.36 70, 286.02 19.8, 147.38 19.8"/>
+                <path class="idea-path" stroke="url(#fbThread)" d="M395 110 C 354.89 110, 341.28 100.8, 301.17 100.8"/>
+                <path class="idea-path" stroke="url(#fbThread)" d="M301.17 100.8 C 285.17 100.8, 275.17 71.4, 269.17 51.8 C 263.17 44.8, 253.17 37.8, 205.17 37.8"/>
+                <path class="idea-path" stroke="url(#fbThread)" d="M301.17 100.8 C 285.17 100.8, 273.17 130.2, 267.17 149.8 C 261.17 156.8, 166.48 163.8, 118.48 163.8"/>
+                <path class="idea-path idea-open on" stroke="url(#fbOpen)" d="M589.05 180 C 654.47 181, 719.9 198.72, 752.61 206" stroke-dasharray="3 4.2"/>
+              </svg>
+              <div class="ideas" data-ideas aria-hidden="true">
+                <p class="idea" data-idea data-text="learn the input format from examples"><span class="idea-sizer"><span class="idea-say">learn the input format from examples</span></span><span class="idea-live" data-live></span></p>
+                <p class="idea" data-idea data-text="replay inputs from old bug reports"><span class="idea-sizer"><span class="idea-say">replay inputs from old bug reports</span></span><span class="idea-live" data-live></span></p>
+                <p class="idea" data-idea data-text="let two tools share what they find"><span class="idea-sizer"><span class="idea-say">let two tools share what they find</span></span><span class="idea-live" data-live></span></p>
+                <p class="idea last" data-idea data-text="an idea nobody has tried yet"><span class="idea-sizer"><span class="idea-say">an idea nobody has tried yet</span><span class="caret"></span><svg class="fb-curl" viewBox="0 0 96 30" aria-hidden="true" focusable="false"><defs><linearGradient id="fbCurl" gradientUnits="userSpaceOnUse" x1="2" y1="14" x2="94" y2="18"><stop offset="0" stop-color="#ad1b98"/><stop offset=".55" stop-color="#6b3fa0"/><stop offset=".84" stop-color="#10756a"/><stop offset="1" stop-color="#10756a" stop-opacity="0"/></linearGradient></defs><path d="M2 14 C 30 14, 54 6, 68 18 C 80 26, 90 22, 94 14" fill="none" stroke="url(#fbCurl)" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="3 4.2" vector-effect="non-scaling-stroke"/></svg></span><span class="idea-live" data-live></span></p>
+              </div>
+              <svg class="sketch" data-sketch aria-hidden="true" focusable="false"></svg>
+            </div>
+            <p class="shot-note" data-note>Every technique here began as someone's idea. Agolic runs yours beside them.</p>
+          </div>
+        </figure>
+      </div>
+    </article>
+  </div>
+</section>
+
+<section class="close" aria-labelledby="close-h">
+  <div class="wrap">
+    <h2 id="close-h">Which way is best?</h2>
+    <p>This example is simple enough to fit on a page, so they can all get there. Agolic is built for real programs, large ones included, where no technique today wins every time. Each one trades a strength for another and our paper measures some of those trade-offs. Maybe you will build the tool that beats them all.</p>
+    <p class="paper"><a href="https://arxiv.org/abs/2608.06397" rel="noopener">Read the paper</a></p>
+  </div>
+</section>
+</main>
+
+<footer class="foot">
+  <div class="wrap"><a href="https://oasis-mbzuai.github.io/" rel="noopener">OASIS @ MBZUAI</a> · <a href="https://www.aprover.ai/" rel="noopener">aprover.ai</a></div>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+
+  var LISTINGS = {
+    c: [
+      {r:'sig', t:'lookup(input) {'},
+      {r:'len', t:'  if strlen(input) != 4'},
+      {r:'lenret', t:'    return "invalid input";'},
+      {r:'prefix', t:'  if input[0..1] != "A7"'},
+      {r:'prefixret', t:'    return "invalid input";'},
+      {r:'digits', t:'  if input[2..3] not digits'},
+      {r:'digitsret', t:'    return "invalid input";'},
+      {r:'parse', t:'  n = input[2..3] as a number;'},
+      {r:'bound', t:'  if n > 40'},
+      {r:'boundret', t:'    return "out of range";'},
+      {r:'lookup', t:'  return rows[n]->text;'},
+      {r:'end', t:'}'}
+    ],
+    cpp: [
+      {r:'sig', t:'lookup(input) {'},
+      {r:'len', t:'  if input.size() != 4'},
+      {r:'lenret', t:'    return "invalid input";'},
+      {r:'prefix', t:'  if input[0..1] != "A7"'},
+      {r:'prefixret', t:'    return "invalid input";'},
+      {r:'digits', t:'  if input[2..3] not digits'},
+      {r:'digitsret', t:'    return "invalid input";'},
+      {r:'parse', t:'  n = input[2..3] as a number;'},
+      {r:'bound', t:'  if n > 40'},
+      {r:'boundret', t:'    return "out of range";'},
+      {r:'lookup', t:'  return rows[n]->text;'},
+      {r:'end', t:'}'}
+    ],
+    rust: [
+      {r:'sig', t:'fn lookup(input: &str) {'},
+      {r:'len', t:'  if input.len() != 4 {'},
+      {r:'lenret', t:'    return "invalid input";'},
+      {r:'prefix', t:'  if &input[..2] != "A7" {'},
+      {r:'prefixret', t:'    return "invalid input";'},
+      {r:'digits', t:'  if input[2..] not digits {'},
+      {r:'digitsret', t:'    return "invalid input";'},
+      {r:'parse', t:'  let n = input[2..].parse();'},
+      {r:'bound', t:'  if n > 40 {'},
+      {r:'boundret', t:'    return "out of range";'},
+      {r:'lookup', t:'  ROWS[n - 1]'},
+      {r:'end', t:'}'}
+    ],
+    go: [
+      {r:'sig', t:'func lookup(input string) {'},
+      {r:'len', t:'  if len(input) != 4 {'},
+      {r:'lenret', t:'    return "invalid input"'},
+      {r:'prefix', t:'  if input[:2] != "A7" {'},
+      {r:'prefixret', t:'    return "invalid input"'},
+      {r:'digits', t:'  if input[2:] not digits {'},
+      {r:'digitsret', t:'    return "invalid input"'},
+      {r:'parse', t:'  n, _ := strconv.Atoi(input[2:])'},
+      {r:'bound', t:'  if n > 40 {'},
+      {r:'boundret', t:'    return "out of range"'},
+      {r:'lookup', t:'  return rows[n-1]'},
+      {r:'end', t:'}'}
+    ],
+    python: [
+      {r:'sig', t:'def lookup(input):'},
+      {r:'len', t:'  if len(input) != 4:'},
+      {r:'lenret', t:'    return "invalid input"'},
+      {r:'prefix', t:'  if input[:2] != "A7":'},
+      {r:'prefixret', t:'    return "invalid input"'},
+      {r:'digits', t:'  if input[2:] not digits:'},
+      {r:'digitsret', t:'    return "invalid input"'},
+      {r:'parse', t:'  n = int(input[2:])'},
+      {r:'bound', t:'  if n > 40:'},
+      {r:'boundret', t:'    return "out of range"'},
+      {r:'lookup', t:'  return rows[n]'}
+    ],
+    java: [
+      {r:'sig', t:'lookup(String input) {'},
+      {r:'len', t:'  if input.length() != 4'},
+      {r:'lenret', t:'    return "invalid input";'},
+      {r:'prefix', t:'  if input[0..1] != "A7"'},
+      {r:'prefixret', t:'    return "invalid input";'},
+      {r:'digits', t:'  if input[2..3] not digits'},
+      {r:'digitsret', t:'    return "invalid input";'},
+      {r:'parse', t:'  n = parseInt(input[2..3]);'},
+      {r:'bound', t:'  if n > 40'},
+      {r:'boundret', t:'    return "out of range";'},
+      {r:'lookup', t:'  return rows[n - 1];'},
+      {r:'end', t:'}'}
+    ],
+    binary: [
+      {r:'sig', t:'lookup:'},
+      {r:'len', t:'  call strlen; cmp $4'},
+      {r:'lenret', t:'  jne "invalid input"'},
+      {r:'prefix', t:'  cmpb "A"; cmpb "7"'},
+      {r:'prefixret', t:'  jne "invalid input"'},
+      {r:'digits', t:'  sub $0x30; cmp $9 (x2)'},
+      {r:'digitsret', t:'  ja "invalid input"'},
+      {r:'parse', t:'  n = 10*d1 + d2'},
+      {r:'bound', t:'  cmp $40'},
+      {r:'boundret', t:'  jg "out of range"'},
+      {r:'lookup', t:'  load rows[n], then its text'}
+    ]
+  };
+
+  var TARGETS = {
+    c: { name: 'C', code: '<span class="c">/* rows[1] to rows[40] hold the rows */</span>\nconst char *lookup(const char *input) {\n    if (strlen(input) != 4)\n        return <span class="s">"invalid input"</span>;\n    if (input[0] != <span class="s">\'A\'</span> || input[1] != <span class="s">\'7\'</span>)\n        return <span class="s">"invalid input"</span>;\n    if (input[2] &lt; <span class="s">\'0\'</span> || input[2] &gt; <span class="s">\'9\'</span> ||\n        input[3] &lt; <span class="s">\'0\'</span> || input[3] &gt; <span class="s">\'9\'</span>)\n        return <span class="s">"invalid input"</span>;\n    int n = (input[2] - <span class="s">\'0\'</span>) * 10\n          + (input[3] - <span class="s">\'0\'</span>);\n    if (n &gt; 40)\n        return <span class="s">"out of range"</span>;\n    return rows[n]-&gt;text;\n}' },
+    cpp: { name: 'C++', code: '<span class="c">// rows[1] to rows[40] hold the rows</span>\nstd::string lookup(const std::string &amp;input) {\n    if (input.size() != 4)\n        return <span class="s">"invalid input"</span>;\n    if (input[0] != <span class="s">\'A\'</span> || input[1] != <span class="s">\'7\'</span>)\n        return <span class="s">"invalid input"</span>;\n    if (input[2] &lt; <span class="s">\'0\'</span> || input[2] &gt; <span class="s">\'9\'</span> ||\n        input[3] &lt; <span class="s">\'0\'</span> || input[3] &gt; <span class="s">\'9\'</span>)\n        return <span class="s">"invalid input"</span>;\n    int n = (input[2] - <span class="s">\'0\'</span>) * 10\n          + (input[3] - <span class="s">\'0\'</span>);\n    if (n &gt; 40)\n        return <span class="s">"out of range"</span>;\n    return rows[n]-&gt;text;\n}' },
+    rust: { name: 'Rust', code: '<span class="c">// rows holds the 40 rows</span>\nfn lookup(input: &amp;str) -&gt; &amp;\'static str {\n    let bytes = input.as_bytes();\n    if bytes.len() != 4 {\n        return <span class="s">"invalid input"</span>;\n    }\n    if &amp;bytes[0..2] != <span class="s">b"A7"</span> {\n        return <span class="s">"invalid input"</span>;\n    }\n    if !bytes[2].is_ascii_digit() || !bytes[3].is_ascii_digit() {\n        return <span class="s">"invalid input"</span>;\n    }\n    let n: usize = input[2..4].parse().unwrap();\n    if n &gt; 40 {\n        return <span class="s">"out of range"</span>;\n    }\n    ROWS[n - 1]\n}' },
+    go: { name: 'Go', code: '<span class="c">// rows holds the 40 rows</span>\nfunc lookup(input string) string {\n    if len(input) != 4 {\n        return <span class="s">"invalid input"</span>\n    }\n    if input[:2] != <span class="s">"A7"</span> {\n        return <span class="s">"invalid input"</span>\n    }\n    if input[2] &lt; <span class="s">\'0\'</span> || input[2] &gt; <span class="s">\'9\'</span> ||\n        input[3] &lt; <span class="s">\'0\'</span> || input[3] &gt; <span class="s">\'9\'</span> {\n        return <span class="s">"invalid input"</span>\n    }\n    n, _ := strconv.Atoi(input[2:])\n    if n &gt; 40 {\n        return <span class="s">"out of range"</span>\n    }\n    return rows[n-1]\n}' },
+    python: { name: 'Python', code: '<span class="c"># rows is keyed by row number, 1 to 40</span>\ndef lookup(input):\n    if len(input) != 4:\n        return <span class="s">"invalid input"</span>\n    if input[:2] != <span class="s">"A7"</span>:\n        return <span class="s">"invalid input"</span>\n    if not (input[2:].isascii() and input[2:].isdigit()):\n        return <span class="s">"invalid input"</span>\n    n = int(input[2:])\n    if n &gt; 40:\n        return <span class="s">"out of range"</span>\n    return rows[n]' },
+    java: { name: 'Java', code: '<span class="c">// rows holds the 40 rows</span>\nstatic String lookup(String input) {\n    if (input.length() != 4)\n        return <span class="s">"invalid input"</span>;\n    if (!input.startsWith(<span class="s">"A7"</span>))\n        return <span class="s">"invalid input"</span>;\n    if (input.charAt(2) &lt; <span class="s">\'0\'</span> || input.charAt(2) &gt; <span class="s">\'9\'</span> ||\n        input.charAt(3) &lt; <span class="s">\'0\'</span> || input.charAt(3) &gt; <span class="s">\'9\'</span>)\n        return <span class="s">"invalid input"</span>;\n    int n = Integer.parseInt(input.substring(2));\n    if (n &gt; 40)\n        return <span class="s">"out of range"</span>;\n    return rows[n - 1];\n}' },
+    binary: { name: 'Binary (no source)', code: '<span class="c">0000000000401160 &lt;lookup&gt;:</span>\n  401160  push   %rbx\n  401161  mov    %rdi,%rbx\n  401164  call   401030 &lt;strlen@plt&gt;\n  401169  mov    %rax,%rcx\n  40116c  mov    $0x402004,%eax   <span class="c"># "invalid input"</span>\n  401171  cmp    $0x4,%rcx        <span class="c"># four characters</span>\n  401175  jne    4011bf\n  401177  cmpb   $0x41,(%rbx)     <span class="c"># "A"</span>\n  40117a  jne    4011bf\n  40117c  cmpb   $0x37,0x1(%rbx)  <span class="c"># "7"</span>\n  401180  jne    4011bf\n  401182  movsbl 0x2(%rbx),%ecx\n  401186  lea    -0x3a(%rcx),%edx\n  401189  cmp    $0xf6,%dl        <span class="c"># digit</span>\n  40118c  jb     4011bf\n  40118e  movzbl 0x3(%rbx),%edx\n  401192  lea    -0x3a(%rdx),%esi\n  401195  cmp    $0xf6,%sil       <span class="c"># digit</span>\n  401199  jb     4011bf\n  40119b  lea    (%rcx,%rcx,4),%eax\n  40119e  lea    (%rdx,%rax,2),%ecx\n  4011a1  mov    $0x402012,%eax   <span class="c"># "out of range"</span>\n  4011a6  cmp    $0x238,%ecx      <span class="c"># n &gt; 40</span>\n  4011ac  jg     4011bf\n  4011ae  add    $0xfffffdf0,%ecx <span class="c"># n</span>\n  4011b4  mov    0x404060(,%rcx,8),%rax  <span class="c"># rows[n]</span>\n  4011bc  mov    (%rax),%rax      <span class="c"># its text</span>\n  4011bf  pop    %rbx\n  4011c0  ret' }
+  };
+
+  // The tool rows.
+  var TOOLS = [
+    { name: 'KLEE', tech: 'symbolic', langs: ['c', 'cpp'] },
+    { name: 'CrossHair', tech: 'symbolic', langs: ['python'] },
+    { name: 'SPF', tech: 'symbolic', langs: ['java'] },
+    { name: 'AFL++', tech: 'fuzzing', langs: ['c', 'cpp'] },
+    { name: 'AFL++ QEMU / FRIDA mode', tech: 'fuzzing', binary: true },
+    { name: 'Atheris', tech: 'fuzzing', langs: ['python'] },
+    { name: 'cargo-fuzz', tech: 'fuzzing', langs: ['rust'] },
+    { name: 'go-fuzz', tech: 'fuzzing', langs: ['go'] },
+    { name: 'honggfuzz', tech: 'fuzzing', langs: ['c', 'cpp'] },
+    { name: 'Jazzer', tech: 'fuzzing', langs: ['java'] },
+    { name: 'JQF', tech: 'fuzzing', langs: ['java'] },
+    { name: 'libFuzzer', tech: 'fuzzing', langs: ['c', 'cpp'] },
+    { name: 'SymCC', tech: 'concolic', langs: ['c', 'cpp'] },
+    { name: 'AFL++ with SymCC', tech: 'hybrid', langs: ['c', 'cpp'] },
+    { name: 'Driller', tech: 'hybrid', binary: true },
+    { name: 'CBMC', tech: 'bounded', langs: ['c'] },
+    { name: 'JBMC', tech: 'bounded', langs: ['java'] },
+    { name: 'Kani', tech: 'bounded', langs: ['rust'] },
+    { name: 'gopter', tech: 'property', langs: ['go'] },
+    { name: 'Hypothesis', tech: 'property', langs: ['python'] },
+    { name: 'jqwik', tech: 'property', langs: ['java'] },
+    { name: 'proptest', tech: 'property', langs: ['rust'] },
+    { name: 'RapidCheck', tech: 'property', langs: ['cpp'] },
+    { name: 'theft', tech: 'property', langs: ['c'] },
+    { name: 'Agolic (built in)', tech: 'generated', langs: ['c', 'cpp', 'rust', 'go', 'python', 'java'] }
+  ];
+
+  var TECH_ORDER = ['symbolic', 'fuzzing', 'concolic', 'hybrid', 'bounded', 'property', 'generated'];
+  var CUSTOM_TARGET = { c: 'C', cpp: 'C++', rust: 'Rust', go: 'Go', python: 'Python', java: 'Java', binary: 'a binary' };
+
+  function toolsFor(target) {
+    var out = {};
+    TECH_ORDER.forEach(function (tech) {
+      for (var i = 0; i < TOOLS.length; i++) {
+        var tool = TOOLS[i];
+        if (tool.tech !== tech) continue;
+        var served = target === 'binary' ? !!tool.binary : (tool.langs || []).indexOf(target) >= 0;
+        if (served) { out[tech] = tool.name; break; }
+      }
+    });
+    return out;
+  }
+
+  var reduce = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
+  var canAnimate = !reduce.matches && 'IntersectionObserver' in window;
+  if (canAnimate) document.documentElement.classList.add('anim');
+
+  var codeView = document.getElementById('code-view');
+  var pickButtons = Array.prototype.slice.call(document.querySelectorAll('.picker.programs button'));
+  var tabsEl = document.getElementById('tech-tabs');
+  var tabsLabel = document.getElementById('tech-tabs-label');
+  var techs = Array.prototype.slice.call(document.querySelectorAll('article.tech'));
+  var pickLive = document.getElementById('pick-live');
+  var techLive = document.getElementById('tech-live');
+  var current = 'c';
+  var currentTech = null;
+  var groupName = 0;
+
+  function esc(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function indexOfRole(id, role) {
+    var lines = LISTINGS[id] || [];
+    for (var i = 0; i < lines.length; i++) if (lines[i].r === role) return i;
+    return 0;
+  }
+
+  function roleIndex(fig, role) {
+    var lines = Array.prototype.slice.call(fig.querySelectorAll('.ln'));
+    for (var i = 0; i < lines.length; i++) if (lines[i].getAttribute('data-role') === role) return i;
+    return 0;
+  }
+
+  function lineEl(fig, role) {
+    return fig.querySelector('.ln[data-role="' + role + '"]');
+  }
+
+  function sideItem(tech, id, role, cls, inner) {
+    return '<span class="sitem ' + cls + '" data-for="' + role + '" style="--i:' + indexOfRole(id, role) + '">' + inner + '</span>';
+  }
+
+  function sideMarkup(tech, id) {
+    if (tech === 'symbolic') {
+      return '<span class="side-trunk"></span>' +
+        sideItem(tech, id, 'len', 'leaf', '<i class="dot"></i>invalid input') +
+        sideItem(tech, id, 'prefix', 'leaf', '<i class="dot"></i>invalid input') +
+        sideItem(tech, id, 'digits', 'leaf', '<i class="dot"></i>invalid input') +
+        sideItem(tech, id, 'bound', 'leaf range', '<i class="dot"></i>out of range') +
+        sideItem(tech, id, 'lookup', 'askmark', 'solver') +
+        sideItem(tech, id, 'lookup', 'cex', 'A700');
+    }
+    if (tech === 'fuzzing') return '<span class="now" data-now></span>';
+    if (tech === 'concolic') {
+      return sideItem(tech, id, 'prefix', 'flipchip', 'B712') +
+        sideItem(tech, id, 'digits', 'flipchip', 'A7X2') +
+        sideItem(tech, id, 'bound', 'flipchip', 'A789') +
+        sideItem(tech, id, 'lookup', 'cex', 'A700') +
+        '<span class="marker" data-marker>other branch</span>';
+    }
+    if (tech === 'hybrid') {
+      return '<span class="sitem lock" data-lock data-for="prefix" style="--i:' + indexOfRole(id, 'prefix') + '">solved</span>' +
+        '<span class="now" data-now></span>';
+    }
+    if (tech === 'bounded') {
+      return sideItem(tech, id, 'lookup', 'askmark', 'solver') +
+        sideItem(tech, id, 'lookup', 'cex', 'A700');
+    }
+    if (tech === 'property') return '<span class="now" data-now></span>' + sideItem(tech, id, 'lookup', 'shrink', 'A700 breaks rule');
+    if (tech === 'generated') {
+      return sideItem(tech, id, 'bound', 'docs', 'docs say rows 1 to 40') +
+        sideItem(tech, id, 'lookup', 'cex', 'test fails');
+    }
+    return '';
+  }
+
+  // Your own card. Threads and dots are measured from the rendered lines and
+  // ideas, so no stroke crosses the code and every language works.
+  var CUSTOM_CAPTION = 'Every technique here began as someone\'s idea. Agolic runs yours beside them.';
+  var CUSTOM_TOUCH = [['prefix', 'digits'], ['sig'], ['len', 'bound'], []];
+  var CUSTOM_DOTS = { prefix: 0, digits: 0, sig: 1, len: 2, bound: 2 };
+  var CUSTOM_TINTS = ['sig', 'prefix', 'digits', 'len', 'bound'];
+  var CUSTOM_WIDE = 700;
+
+  function customTargetPhrase(id) {
+    return id === 'binary' ? 'for a binary' : 'for ' + CUSTOM_TARGET[id] + ' programs';
+  }
+
+  function customAria(id) {
+    return 'Four ideas sit in the open space beside a pale listing, three reaching the lines they touch and the last trailing off into space with a caret beside it, ' + customTargetPhrase(id) + '.';
+  }
+
+  function num(n) { return String(Math.round(n * 100) / 100); }
+
+  function cubic(d, c1x, c1y, c2x, c2y, x, y) {
+    return d + ' C' + num(c1x) + ' ' + num(c1y) + ', ' + num(c2x) + ' ' + num(c2y) + ', ' + num(x) + ' ' + num(y);
+  }
+
+  // One loose thread from an idea to a point in the open space. It leaves and
+  // arrives on a horizontal tangent, and the bend sets how wide the bow is.
+  function threadPath(s, d, bend) {
+    var k = Math.max(22, Math.abs(s.x - d.x) * .45 * (bend || 1));
+    return cubic('M' + num(s.x) + ' ' + num(s.y), s.x - k, s.y, d.x + k, d.y, d.x, d.y);
+  }
+
+  // A short branch of a fork, kept clear by arriving along the target row.
+  function forkPath(j, d, e, m) {
+    return cubic('M' + num(j.x) + ' ' + num(j.y), j.x - e, j.y, d.x + m, d.y, d.x, d.y);
+  }
+
+  // A longer branch that leaves the fork, turns in the open space, then runs
+  // along the target line's row into its end. No part of it runs vertically.
+  function branchPath(j, a, d) {
+    var p = cubic('M' + num(j.x) + ' ' + num(j.y), j.x - 16, j.y, a.x + 6, a.y - (a.y - j.y) * .4, a.x, a.y);
+    return cubic(p, a.x - 6, a.y + (d.y - a.y) * .5, d.x + 48, d.y, d.x, d.y);
+  }
+
+  // The open idea's dashed thread. It drifts away and fades before it meets
+  // anything; on narrow layouts it simply runs out of room sooner.
+  function openCurve(s, m) {
+    var room = m.w - s.x - 10;
+    var len = Math.min(m.narrow ? 120 : 168, Math.max(20, room));
+    var drop = Math.min(26, 9 + len * .12);
+    var e = { x: s.x + len, y: s.y + drop };
+    return {
+      d: cubic('M' + num(s.x) + ' ' + num(s.y), s.x + len * .4, s.y + 1, s.x + len * .8, s.y + drop * .72, e.x, e.y),
+      end: e
+    };
+  }
+
+  function textEnd(el) {
+    var range = document.createRange();
+    range.selectNodeContents(el);
+    var rects = range.getClientRects();
+    return rects.length ? rects[rects.length - 1].right : el.getBoundingClientRect().right;
+  }
+
+  function customMetrics(fig) {
+    var stage = fig.querySelector('.stage');
+    var listing = fig.querySelector('[data-listing]');
+    if (!stage || !listing) return null;
+    var sr = stage.getBoundingClientRect();
+    if (sr.width < 4 || sr.height < 4) return null;
+    var lr = listing.getBoundingClientRect();
+    var cs = getComputedStyle(listing);
+    var first = listing.querySelector('.ln');
+    var ls = first ? getComputedStyle(first) : cs;
+    var padLeft = parseFloat(ls.paddingLeft) || 0;
+    var lines = {};
+    Array.prototype.forEach.call(listing.querySelectorAll('.ln'), function (el) {
+      var r = el.getBoundingClientRect();
+      lines[el.getAttribute('data-role')] = {
+        y: r.top - sr.top + r.height / 2,
+        left: r.left - sr.left,
+        textLeft: r.left - sr.left + padLeft,
+        endX: textEnd(el) - sr.left
+      };
+    });
+    var ideas = Array.prototype.slice.call(fig.querySelectorAll('.idea')).map(function (li) {
+      var say = li.querySelector('.idea-say');
+      var rects = [];
+      if (say) {
+        var range = document.createRange();
+        range.selectNodeContents(say);
+        rects = Array.prototype.slice.call(range.getClientRects());
+      }
+      if (!rects.length) rects = [li.getBoundingClientRect()];
+      var f = rects[0], l = rects[rects.length - 1];
+      return {
+        first: { x: f.left - sr.left, y: f.top - sr.top + f.height / 2 },
+        last: { x: l.right - sr.left, y: l.top - sr.top + l.height / 2 }
+      };
+    });
+    return {
+      w: sr.width, h: sr.height, left: sr.left, top: sr.top,
+      listingLeft: lr.left - sr.left,
+      listingRight: lr.right - sr.left,
+      listingTop: lr.top - sr.top,
+      listingBottom: lr.bottom - sr.top,
+      narrow: sr.width < CUSTOM_WIDE,
+      lines: lines,
+      ideas: ideas
+    };
+  }
+
+  function buildSketch(fig) {
+    var svg = fig.querySelector('[data-sketch]');
+    if (!svg) return null;
+    var m = customMetrics(fig);
+    if (!m) return null;
+    svg.setAttribute('viewBox', '0 0 ' + num(m.w) + ' ' + num(m.h));
+    svg.setAttribute('preserveAspectRatio', 'none');
+    var has = function (role) { return !!m.lines[role]; };
+    var dot = function (role) {
+      var l = m.lines[role];
+      return l ? { x: l.endX + 7, y: l.y } : null;
+    };
+    var ideas = m.ideas;
+    if (!ideas.length) return m;
+    var last = ideas[ideas.length - 1];
+    var openStart = { x: last.last.x + 6, y: last.last.y };
+    var open = openCurve(openStart, m);
+
+    var h = '<defs>' +
+      '<linearGradient id="threadGrad" gradientUnits="userSpaceOnUse" x1="656" y1="0" x2="96" y2="0">' +
+        '<stop offset="0" stop-color="#ad1b98"/><stop offset=".52" stop-color="#6b3fa0"/><stop offset="1" stop-color="#10756a"/>' +
+      '</linearGradient>' +
+      '<linearGradient id="openGrad" gradientUnits="userSpaceOnUse" x1="' + num(openStart.x) + '" y1="' + num(openStart.y) +
+        '" x2="' + num(open.end.x) + '" y2="' + num(open.end.y) + '">' +
+        '<stop offset="0" stop-color="#ad1b98"/><stop offset=".55" stop-color="#6b3fa0"/><stop offset=".85" stop-color="#10756a"/>' +
+        '<stop offset="1" stop-color="#10756a" stop-opacity="0"/>' +
+      '</linearGradient>' +
+    '</defs>';
+
+    function addPath(i, d, openCls) {
+      h += '<path class="idea-path' + (openCls ? ' idea-open' : '') + '"' + (openCls ? '' : ' pathLength="1"') +
+        ' data-idea="' + i + '" stroke="url(#' + (openCls ? 'openGrad' : 'threadGrad') + ')" d="' + d + '"/>';
+    }
+    function addDot(role) {
+      var d = dot(role);
+      if (!d) return;
+      h += '<circle class="idea-dot" data-idea="' + CUSTOM_DOTS[role] + '" cx="' + num(d.x) + '" cy="' + num(d.y) + '" r="2.6"/>';
+    }
+
+    if (!m.narrow) {
+      var safe = 0;
+      Object.keys(m.lines).forEach(function (r) { safe = Math.max(safe, m.lines[r].endX); });
+      safe += 16;
+      var startAt = function (i) { return { x: ideas[i].first.x - 5, y: ideas[i].first.y }; };
+      var p0 = dot('prefix'), d0 = dot('digits'), s1 = dot('sig');
+      var l2 = dot('len'), b2 = dot('bound');
+      if (p0 && d0) {
+        var j0 = { x: Math.max(safe + 20, Math.max(p0.x, d0.x) + 24), y: (p0.y + d0.y) / 2 };
+        addPath(0, threadPath(startAt(0), j0, 1.04));
+        addPath(0, forkPath(j0, p0, 21, 17));
+        addPath(0, forkPath(j0, d0, 21, 11));
+      }
+      if (s1) addPath(1, threadPath(startAt(1), s1, .97));
+      if (l2 && b2) {
+        var j2 = { x: Math.max(safe + 40, Math.max(l2.x, b2.x) + 96), y: (l2.y + b2.y) / 2 };
+        var la = { x: j2.x - 32, y: l2.y + 14 };
+        var ba = { x: j2.x - 34, y: b2.y - 14 };
+        addPath(2, threadPath(startAt(2), j2, .95));
+        addPath(2, branchPath(j2, la, l2));
+        addPath(2, branchPath(j2, ba, b2));
+      }
+      addPath(3, open.d, true);
+    } else {
+      addPath(3, open.d, true);
+    }
+    Object.keys(CUSTOM_DOTS).forEach(addDot);
+    svg.innerHTML = h;
+    return m;
+  }
+
+  function customCaret(fig) {
+    var c = fig.__caret;
+    if (!c) {
+      c = document.createElement('span');
+      c.className = 'caret';
+      c.setAttribute('aria-hidden', 'true');
+      fig.__caret = c;
+    }
+    return c;
+  }
+
+  function undraw(path) {
+    path.style.transition = 'none';
+    path.style.strokeDasharray = '1';
+    path.style.strokeDashoffset = '1';
+    void path.getBoundingClientRect();
+    path.style.transition = '';
+  }
+
+  function draw(path) {
+    path.style.strokeDashoffset = '0';
+  }
+
+  function undash(path) {
+    path.style.strokeDasharray = '';
+    path.style.strokeDashoffset = '';
+    path.style.transition = '';
+  }
+
+  function resetCustom(fig) {
+    resetShot(fig);
+    buildSketch(fig);
+    Array.prototype.forEach.call(fig.querySelectorAll('.idea-path'), function (p) {
+      if (p.classList.contains('idea-open')) p.classList.remove('on');
+      else undraw(p);
+    });
+    Array.prototype.forEach.call(fig.querySelectorAll('.idea-dot'), function (d) { d.classList.remove('on'); });
+    Array.prototype.forEach.call(fig.querySelectorAll('.idea'), function (li) {
+      li.classList.remove('live');
+      var live = li.querySelector('[data-live]');
+      if (live) live.textContent = '';
+    });
+    var last = fig.querySelector('.idea.last');
+    if (last) { last.classList.remove('bloom'); last.classList.add('pre'); }
+    var caret = customCaret(fig);
+    if (caret.parentNode) caret.parentNode.removeChild(caret);
+    caret.className = 'caret';
+    setNote(fig, CUSTOM_CAPTION);
+  }
+
+  function finalCustom(fig) {
+    resetShot(fig);
+    buildSketch(fig);
+    Array.prototype.forEach.call(fig.querySelectorAll('.idea-path'), function (p) {
+      if (p.classList.contains('idea-open')) p.classList.add('on');
+      else undash(p);
+    });
+    Array.prototype.forEach.call(fig.querySelectorAll('.idea-dot'), function (d) { d.classList.add('on'); });
+    CUSTOM_TINTS.forEach(function (role) {
+      var el = lineEl(fig, role);
+      if (el) el.classList.add('tint');
+    });
+    var caret = customCaret(fig);
+    caret.className = 'caret on';
+    var ideas = Array.prototype.slice.call(fig.querySelectorAll('.idea'));
+    ideas.forEach(function (li, i) {
+      li.classList.remove('live');
+      var live = li.querySelector('[data-live]');
+      live.textContent = li.getAttribute('data-text') || '';
+      if (i === ideas.length - 1) live.appendChild(caret);
+    });
+    var last = fig.querySelector('.idea.last');
+    if (last) { last.classList.remove('pre'); last.classList.remove('bloom'); }
+    setNote(fig, CUSTOM_CAPTION);
+  }
+
+  function typeIdea(live, text, caret, token, speed) {
+    return (async function () {
+      live.textContent = '';
+      live.appendChild(caret);
+      for (var i = 1; i <= text.length; i++) {
+        live.textContent = text.slice(0, i);
+        live.appendChild(caret);
+        await wait(speed, token);
+      }
+    })();
+  }
+
+  function renderCard(article, id) {
+    var tech = article.getAttribute('data-tech');
+    article.querySelector('[data-listing]').innerHTML = (LISTINGS[id] || []).map(function (l) {
+      return '<div class="ln" data-role="' + l.r + '">' + esc(l.t) + '</div>';
+    }).join('');
+    var side = article.querySelector('[data-side]');
+    if (side) side.innerHTML = sideMarkup(tech, id);
+    var stage = article.querySelector('.stage');
+    if (stage) stage.classList.toggle('custom', tech === 'custom');
+    if (tech === 'custom') {
+      var fig = article.querySelector('[data-viz]');
+      if (fig) {
+        var chip = fig.querySelector('[data-custom-target]');
+        if (chip) chip.textContent = customTargetPhrase(id);
+        fig.setAttribute('aria-label', customAria(id));
+        finalCustom(fig);
+      }
+    }
+    var top = article.querySelector('.shot-top');
+    if (top && tech === 'property') {
+      top.querySelector('[data-feed]').innerHTML = '<span class="tag">rule</span><span class="ruletext">No input shaped A7 and two digits crashes.</span>';
+    }
+  }
+
+  function renderAll(id) {
+    techs.forEach(function (article) { renderCard(article, id); });
+  }
+
+  function setFeed(fig, tag, chips, extra) {
+    var f = fig.querySelector('[data-feed]');
+    if (!f) return;
+    var h = '<span class="tag">' + tag + '</span>';
+    (chips || []).forEach(function (c) {
+      h += '<span class="chip' + (c.mono ? ' mono' : '') + (c.cls ? ' ' + c.cls : '') + '">' + esc(c.text) + '</span>';
+    });
+    if (extra) h += extra;
+    f.innerHTML = h;
+  }
+
+  function setNote(fig, text) {
+    var n = fig.querySelector('[data-note]');
+    if (n) n.textContent = text;
+  }
+
+  function setPool(fig, items) {
+    var p = fig.querySelector('[data-pool]');
+    if (!p) return;
+    var h = '<span class="pool-label">inputs kept, because each reached new lines</span>';
+    var crash = '';
+    (items || []).forEach(function (it) {
+      var chip = '<span class="chip' + (it.bad ? ' bad' : '') + '">' + esc(it.text) + '</span>';
+      if (it.bad) crash += chip; else h += chip;
+    });
+    if (crash) h += '<span class="crashgroup"><span class="pool-crash">crash saved</span>' + crash + '</span>';
+    p.innerHTML = h;
+  }
+
+  function clearLines(fig) {
+    Array.prototype.forEach.call(fig.querySelectorAll('.ln'), function (l) { l.className = 'ln'; });
+  }
+
+  function light(fig, roles) {
+    (roles || []).forEach(function (r) {
+      var e = lineEl(fig, r);
+      if (e) e.classList.add('on');
+    });
+  }
+
+  function flash(e) {
+    e.classList.remove('new');
+    void e.offsetWidth;
+    e.classList.add('new');
+    if (!e.__flashId) e.__flashId = 0;
+    var id = ++e.__flashId;
+    setTimeout(function () { if (e.__flashId === id) e.classList.remove('new'); }, 430);
+  }
+
+  function hideSide(fig) {
+    Array.prototype.forEach.call(fig.querySelectorAll('.sitem'), function (e) { e.classList.remove('on'); });
+    var m = fig.querySelector('[data-marker]');
+    if (m) m.classList.remove('on');
+    var n = fig.querySelector('[data-now]');
+    if (n) { n.classList.remove('on'); n.classList.remove('bad'); }
+    var lock = fig.querySelector('[data-lock]');
+    if (lock) { lock.classList.remove('open'); lock.classList.remove('on'); lock.textContent = 'solved'; }
+  }
+
+  function resetShot(fig) {
+    clearLines(fig);
+    hideSide(fig);
+    setNote(fig, '');
+    var marker = fig.querySelector('[data-marker]');
+    if (marker) marker.classList.remove('on');
+    var now = fig.querySelector('[data-now]');
+    if (now) now.classList.remove('on');
+    var pool = fig.querySelector('[data-pool]');
+    if (pool) setPool(fig, []);
+  }
+
+  function showSide(fig, role, cls) {
+    var els = fig.querySelectorAll('.sitem[data-for="' + role + '"]');
+    Array.prototype.forEach.call(els, function (e) {
+      if (!cls || e.classList.contains(cls)) e.classList.add('on');
+    });
+  }
+
+  function outcome(input) {
+    if (input.length !== 4) return { stop: 'len', roles: ['sig', 'len', 'lenret'], msg: 'invalid input' };
+    if (input.slice(0, 2) !== 'A7') return { stop: 'prefix', roles: ['sig', 'len', 'prefix', 'prefixret'], msg: 'invalid input' };
+    if (!/^[0-9][0-9]$/.test(input.slice(2))) return { stop: 'digits', roles: ['sig', 'len', 'prefix', 'digits', 'digitsret'], msg: 'invalid input' };
+    var n = Number(input.slice(2));
+    if (n > 40) return { stop: 'bound', roles: ['sig', 'len', 'prefix', 'digits', 'parse', 'bound', 'boundret'], msg: 'out of range' };
+    if (n === 0) return { stop: 'lookup', crash: true, roles: ['sig', 'len', 'prefix', 'digits', 'parse', 'bound', 'lookup'], msg: 'crash' };
+    return { stop: 'lookup', row: n, roles: ['sig', 'len', 'prefix', 'digits', 'parse', 'bound', 'lookup'], msg: 'row ' + n };
+  }
+
+  // Motion control.
+  function ctl() {
+    return { dead: false, timers: [], stop: function () { this.dead = true; this.timers.forEach(clearTimeout); } };
+  }
+  function wait(ms, token) {
+    return new Promise(function (res, rej) {
+      token.timers.push(setTimeout(function () { token.dead ? rej('stop') : res(); }, ms));
+    });
+  }
+
+  async function runTrace(fig, token, input, opts) {
+    opts = opts || {};
+    var o = outcome(input);
+    if (!opts.keepLines) clearLines(fig);
+    for (var i = 0; i < o.roles.length; i++) {
+      var e = lineEl(fig, o.roles[i]);
+      if (!e) continue;
+      e.classList.add('on');
+      if (o.roles[i] === 'lookup' && o.crash) e.classList.add('bad');
+      await wait(opts.speed || 70, token);
+    }
+    if (opts.note) setNote(fig, opts.note);
+    return o;
+  }
+
+  async function positionNow(fig, role, text, bad) {
+    var now = fig.querySelector('[data-now]');
+    if (!now) return;
+    now.textContent = text;
+    now.classList.toggle('bad', !!bad);
+    now.style.setProperty('--i', roleIndex(fig, role));
+    now.classList.add('on');
+  }
+
+  async function playFuzzing(fig, token) {
+    resetShot(fig);
+    var covered = {};
+    var pool = [];
+    var inputs = ['HH12', 'A71', 'A7X9', 'A741', 'A709', 'A700'];
+    setPool(fig, pool);
+    for (var k = 0; k < inputs.length; k++) {
+      var input = inputs[k];
+      var o = outcome(input);
+      setFeed(fig, k === 0 ? 'seed' : 'input', [{ text: input }]);
+      if (k === 0) setNote(fig, 'The fuzzer starts from a seed.');
+      if (k === 1) setNote(fig, 'It keeps each change that reaches new lines.');
+      var linePace = k === 0 ? 260 : (k === 1 ? 170 : 110);
+      var fresh = false;
+      for (var i = 0; i < o.roles.length; i++) {
+        var role = o.roles[i];
+        var e = lineEl(fig, role);
+        if (!e) continue;
+        if (!covered[role]) { covered[role] = true; fresh = true; flash(e); }
+        e.classList.add('on');
+        await positionNow(fig, role, input, !!o.crash && role === 'lookup');
+        await wait(linePace, token);
+      }
+      if (o.crash) {
+        var lk = lineEl(fig, 'lookup');
+        if (lk) lk.classList.add('bad');
+      }
+      if (fresh || o.crash) { pool.push({ text: input, bad: !!o.crash }); setPool(fig, pool); }
+      if (k === 0) setNote(fig, 'The seed HH12 stops at the A7 check.');
+      await wait(o.crash ? 900 : (k === 0 ? 2200 : (k === 1 ? 2400 : 550)), token);
+    }
+    setFeed(fig, 'input', [{ text: 'A700', cls: 'bad' }]);
+    setNote(fig, 'A700 reaches the last line and it crashes.');
+  }
+
+  async function playSymbolic(fig, token) {
+    resetShot(fig);
+    setFeed(fig, 'input', [{ text: '????' }]);
+    setNote(fig, 'The input stays open, so both sides of each check are followed.');
+    await wait(2600, token);
+    var seq = ['sig', 'len', 'prefix', 'digits', 'parse', 'bound', 'lookup'];
+    for (var i = 0; i < seq.length; i++) {
+      var role = seq[i];
+      var e = lineEl(fig, role);
+      if (e) e.classList.add('on');
+      if (role === 'len' || role === 'prefix' || role === 'digits') {
+        showSide(fig, role, 'leaf');
+        await wait(750, token);
+      } else if (role === 'bound') {
+        showSide(fig, role, 'range');
+        await wait(750, token);
+      } else if (role === 'lookup') {
+        Array.prototype.forEach.call(fig.querySelectorAll('.sitem.askmark'), function (x) { x.classList.add('on'); });
+        if (e) e.classList.add('sol');
+        setNote(fig, 'The tool asks the solver whether the lookup can crash.');
+        await wait(2800, token);
+        setNote(fig, 'A solver works out A700. Row 0 is not in the table, so it crashes.');
+        setFeed(fig, 'solver writes', [{ text: 'A700', cls: 'bad' }]);
+        Array.prototype.forEach.call(fig.querySelectorAll('.sitem.askmark'), function (x) { x.classList.remove('on'); });
+        showSide(fig, 'lookup', 'cex');
+        if (e) { e.classList.remove('sol'); e.classList.add('bad'); }
+        await wait(320, token);
+      } else {
+        await wait(300, token);
+      }
+    }
+    setNote(fig, 'A solver works out A700. Row 0 is not in the table, so it crashes.');
+  }
+
+  async function playConcolic(fig, token) {
+    resetShot(fig);
+    setFeed(fig, 'seed', [{ text: 'A712' }]);
+    await runTrace(fig, token, 'A712', { speed: 190, note: 'The seed A712 returns row 12.' });
+    await wait(2200, token);
+    var marker = fig.querySelector('[data-marker]');
+    var flips = [
+      { check: 'bound', input: 'A789', note: 'Go back to the last check and take its other branch.' },
+      { check: 'digits', input: 'A7X2', note: 'Back to the digit check.' },
+      { check: 'prefix', input: 'B712', note: 'Back to the A7 check.' }
+    ];
+    var from = 'lookup';
+    for (var i = 0; i < flips.length; i++) {
+      var f = flips[i];
+      if (marker) {
+        marker.style.transition = 'none';
+        marker.style.setProperty('--i', roleIndex(fig, from));
+        void marker.offsetWidth;
+        marker.style.transition = '';
+        marker.classList.add('on');
+        await wait(140, token);
+        marker.style.setProperty('--i', roleIndex(fig, f.check));
+        await wait(600, token);
+      }
+      setNote(fig, f.note);
+      var el = lineEl(fig, f.check);
+      if (el) el.classList.add('sol');
+      var chip = fig.querySelector('.sitem.flipchip[data-for="' + f.check + '"]');
+      if (chip) { chip.textContent = f.input; chip.classList.add('on'); }
+      setFeed(fig, 'run', [{ text: f.input }]);
+      await wait(i === 0 ? 2600 : 800, token);
+      if (el) el.classList.remove('sol');
+      var o = await runTrace(fig, token, f.input, { speed: i === 0 ? 150 : 90 });
+      setNote(fig, f.input + ' returns ' + o.msg + '.');
+      if (marker) marker.classList.remove('on');
+      from = f.check;
+      await wait(i === 0 ? 1800 : 900, token);
+    }
+    setFeed(fig, 'run', [{ text: 'A789' }]);
+    await runTrace(fig, token, 'A789', { speed: 90 });
+    setNote(fig, 'Second round. Run A789 and flip its last check back.');
+    if (marker) {
+      marker.style.transition = 'none';
+      marker.style.setProperty('--i', roleIndex(fig, 'boundret'));
+      void marker.offsetWidth;
+      marker.style.transition = '';
+      marker.classList.add('on');
+      await wait(140, token);
+      marker.style.setProperty('--i', roleIndex(fig, 'bound'));
+    }
+    await wait(2200, token);
+    var boundLine = lineEl(fig, 'bound');
+    if (boundLine) boundLine.classList.add('sol');
+    setFeed(fig, 'solver writes', [{ text: 'A700', cls: 'bad' }]);
+    setNote(fig, 'Any number up to 40 will do. The solver picked 00.');
+    await wait(2400, token);
+    if (boundLine) boundLine.classList.remove('sol');
+    if (marker) marker.classList.remove('on');
+    setFeed(fig, 'run', [{ text: 'A700', cls: 'bad' }]);
+    await runTrace(fig, token, 'A700', { speed: 120 });
+    showSide(fig, 'lookup', 'cex');
+    setNote(fig, 'On the second round the solver picked 00 and A700 crashed.');
+  }
+
+  async function playHybrid(fig, token) {
+    resetShot(fig);
+    setFeed(fig, 'fuzzer', []);
+    var lock = fig.querySelector('[data-lock]');
+    var tries = ['HH12', 'X712', 'B7A4', 'A1X2'];
+    setNote(fig, "The fuzzer's first inputs stop at the A7 line.");
+    for (var i = 0; i < tries.length; i++) {
+      setFeed(fig, 'fuzzer', [{ text: tries[i] }]);
+      clearLines(fig);
+      light(fig, ['sig', 'len', 'prefix', 'prefixret']);
+      await positionNow(fig, 'prefixret', tries[i], false);
+      await wait(i === 0 ? 1200 : 650, token);
+    }
+    await wait(500, token);
+    var stuck = fig.querySelector('[data-now]');
+    if (stuck) stuck.classList.remove('on');
+    var prefix = lineEl(fig, 'prefix');
+    if (prefix) prefix.classList.add('sol');
+    if (lock) { lock.textContent = 'solved'; lock.classList.add('open'); lock.classList.add('on'); }
+    var solver = fig.querySelector('.sitem.askmark[data-for="prefix"]');
+    if (solver) solver.classList.add('on');
+    setFeed(fig, 'solver', [{ text: 'A712' }]);
+    setNote(fig, 'A solver works out A712, which passes the A7 check.');
+    await wait(3000, token);
+    if (prefix) prefix.classList.remove('sol');
+    await runTrace(fig, token, 'A712', { speed: 130 });
+    await wait(500, token);
+    var changes = ['A712', 'A720', 'A709', 'A700'];
+    for (var j = 0; j < changes.length; j++) {
+      var input = changes[j];
+      setFeed(fig, 'fuzzer', [{ text: input, cls: input === 'A700' ? 'bad' : '' }]);
+      setNote(fig, input === 'A700' ? 'A700 crashes at the lookup.' : 'The fuzzer keeps changing A712.');
+      if (j > 0) await runTrace(fig, token, input, { speed: 80 });
+      await positionNow(fig, 'lookup', input === 'A700' ? 'found A700' : input, input === 'A700');
+      if (input === 'A700') {
+        var lk = lineEl(fig, 'lookup');
+        if (lk) lk.classList.add('bad');
+      }
+      await wait(input === 'A700' ? 1800 : (j === 0 ? 1500 : 600), token);
+    }
+    setNote(fig, 'The solver wrote A712 and the fuzzer found A700.');
+  }
+
+  async function playBounded(fig, token) {
+    resetShot(fig);
+    setFeed(fig, 'inputs', [{ text: 'every input at once', mono: true }, { text: 'loops unrolled to a set limit', mono: true }]);
+    light(fig, LISTINGS[current].map(function (l) { return l.r; }));
+    await wait(1400, token);
+    Array.prototype.forEach.call(fig.querySelectorAll('.sitem.askmark'), function (x) { x.classList.add('on'); });
+    setNote(fig, 'Can the lookup ever crash?');
+    await wait(2600, token);
+    Array.prototype.forEach.call(fig.querySelectorAll('.sitem.askmark'), function (x) { x.classList.remove('on'); });
+    showSide(fig, 'lookup', 'cex');
+    var lk = lineEl(fig, 'lookup');
+    if (lk) lk.classList.add('bad');
+    setNote(fig, 'Can the lookup ever crash? Yes, A700 does.');
+  }
+
+  async function playProperty(fig, token) {
+    resetShot(fig);
+    setFeed(fig, 'rule', [], '<span class="ruletext">No input shaped A7 and two digits crashes.</span>');
+    await wait(2600, token);
+    var inputs = ['A712', 'A741', 'A709', 'A718', 'A733', 'A700'];
+    for (var i = 0; i < inputs.length; i++) {
+      setFeed(fig, 'generated', [{ text: inputs[i], cls: inputs[i] === 'A700' ? 'bad' : '' }]);
+      var o = await runTrace(fig, token, inputs[i], { speed: i === 0 ? 120 : 55 });
+      await positionNow(fig, 'lookup', inputs[i], !!o.crash);
+      if (o.crash) {
+        var lk = lineEl(fig, 'lookup');
+        if (lk) lk.classList.add('bad');
+        setNote(fig, 'A700 breaks the rule.');
+      }
+      await wait(inputs[i] === 'A700' ? 1400 : (i === 0 ? 700 : 240), token);
+    }
+    var last = fig.querySelector('[data-now]');
+    if (last) last.classList.remove('on');
+    showSide(fig, 'lookup', 'shrink');
+    setFeed(fig, 'rule', [], '<span class="ruletext">No input shaped A7 and two digits crashes.</span>');
+    setNote(fig, 'A700 breaks the rule.');
+  }
+
+  async function playGenerated(fig, token) {
+    resetShot(fig);
+    showSide(fig, 'bound', 'docs');
+    setFeed(fig, 'generated test', [{ text: 'A700' }], '<span class="expect">expects out of range</span>');
+    setNote(fig, 'The docs say rows 1 to 40. The bound check sees only the top.');
+    await wait(4000, token);
+    await runTrace(fig, token, 'A700', { speed: 170 });
+    var lk = lineEl(fig, 'lookup');
+    if (lk) lk.classList.add('bad');
+    showSide(fig, 'lookup', 'cex');
+    setNote(fig, 'The docs say rows 1 to 40. The test expects out of range and gets a crash, so the test fails.');
+  }
+
+  async function playCustom(fig, token) {
+    resetCustom(fig);
+    await wait(450, token);
+    var caret = customCaret(fig);
+    caret.classList.add('on');
+    var ideas = Array.prototype.slice.call(fig.querySelectorAll('.idea'));
+    for (var k = 0; k < ideas.length; k++) {
+      var li = ideas[k];
+      var live = li.querySelector('[data-live]');
+      var text = li.getAttribute('data-text') || '';
+      var isLast = k === ideas.length - 1;
+      if (k > 0) ideas[k - 1].classList.remove('live');
+      if (!isLast) li.classList.add('live');
+      var typing = typeIdea(live, text, caret, token, isLast ? 34 : 26);
+      await typing;
+      if (isLast) {
+        li.classList.remove('pre');
+        li.classList.add('bloom');
+        var open = fig.querySelector('.sketch .idea-open');
+        if (open) open.classList.add('on');
+        await wait(1150, token);
+        caret.classList.add('blink');
+        await wait(1920, token);
+        caret.classList.remove('blink');
+        caret.classList.add('on');
+        break;
+      }
+      var paths = fig.querySelectorAll('.idea-path[data-idea="' + k + '"]:not(.idea-open)');
+      if (paths.length > 1) {
+        draw(paths[0]);
+        await wait(300, token);
+        Array.prototype.slice.call(paths, 1).forEach(draw);
+      } else {
+        Array.prototype.forEach.call(paths, draw);
+      }
+      await wait(850, token);
+      CUSTOM_TOUCH[k].forEach(function (role) {
+        var el = lineEl(fig, role);
+        if (el) { el.classList.remove('tint'); el.classList.add('wash'); }
+      });
+      await wait(140, token);
+      Array.prototype.forEach.call(fig.querySelectorAll('.idea-dot[data-idea="' + k + '"]'), function (d) { d.classList.add('on'); });
+      await wait(300, token);
+    }
+  }
+
+  var players = {
+    symbolic: playSymbolic, fuzzing: playFuzzing, concolic: playConcolic,
+    hybrid: playHybrid, bounded: playBounded, property: playProperty,
+    generated: playGenerated, custom: playCustom
+  };
+
+  function finalFrame(article) {
+    var tech = article.getAttribute('data-tech');
+    var fig = article.querySelector('[data-viz]');
+    if (!fig) return;
+    if (tech === 'custom') { finalCustom(fig); return; }
+    resetShot(fig);
+    var all = Array.prototype.slice.call(fig.querySelectorAll('.ln'));
+    all.forEach(function (l) { l.classList.add('on'); });
+    var path = ['sig', 'len', 'prefix', 'digits', 'parse', 'bound', 'lookup'];
+    if (tech === 'concolic' || tech === 'hybrid' || tech === 'property' || tech === 'generated') {
+      clearLines(fig);
+      light(fig, path);
+    }
+    if (tech === 'symbolic') {
+      showSide(fig, 'len', 'leaf'); showSide(fig, 'prefix', 'leaf'); showSide(fig, 'digits', 'leaf'); showSide(fig, 'bound', 'range');
+      showSide(fig, 'lookup', 'cex');
+      lineEl(fig, 'lookup').classList.add('bad');
+      setFeed(fig, 'solver writes', [{ text: 'A700', cls: 'bad' }]);
+      setNote(fig, 'A solver works out A700. Row 0 is not in the table, so it crashes.');
+    } else if (tech === 'fuzzing') {
+      lineEl(fig, 'lookup').classList.add('bad');
+      positionNow(fig, 'lookup', 'A700', true);
+      setFeed(fig, 'input', [{ text: 'A700', cls: 'bad' }]);
+      setPool(fig, [{text:'HH12'},{text:'A71'},{text:'A7X9'},{text:'A741'},{text:'A709'},{text:'A700',bad:true}]);
+      setNote(fig, 'A700 reaches the last line and it crashes.');
+    } else if (tech === 'concolic') {
+      Array.prototype.forEach.call(fig.querySelectorAll('.sitem.flipchip'), function (x) { x.classList.add('on'); });
+      showSide(fig, 'lookup', 'cex');
+      lineEl(fig, 'lookup').classList.add('bad');
+      setFeed(fig, 'run', [{ text: 'A700', cls: 'bad' }]);
+      setNote(fig, 'On the second round the solver picked 00 and A700 crashed.');
+    } else if (tech === 'hybrid') {
+      var lock = fig.querySelector('[data-lock]');
+      if (lock) { lock.textContent = 'solved'; lock.classList.add('open'); lock.classList.add('on'); }
+      lineEl(fig, 'lookup').classList.add('bad');
+      positionNow(fig, 'lookup', 'found A700', true);
+      setFeed(fig, 'fuzzer', [{ text: 'A700', cls: 'bad' }]);
+      setNote(fig, 'The solver wrote A712 and the fuzzer found A700.');
+    } else if (tech === 'bounded') {
+      showSide(fig, 'lookup', 'cex');
+      lineEl(fig, 'lookup').classList.add('bad');
+      setFeed(fig, 'inputs', [{ text: 'every input at once', mono: true }, { text: 'loops unrolled to a set limit', mono: true }]);
+      setNote(fig, 'Can the lookup ever crash? Yes, A700 does.');
+    } else if (tech === 'property') {
+      lineEl(fig, 'lookup').classList.add('bad');
+      showSide(fig, 'lookup', 'shrink');
+      setFeed(fig, 'rule', [], '<span class="ruletext">No input shaped A7 and two digits crashes.</span>');
+      setNote(fig, 'A700 breaks the rule.');
+    } else if (tech === 'generated') {
+      showSide(fig, 'bound', 'docs');
+      showSide(fig, 'lookup', 'cex');
+      lineEl(fig, 'lookup').classList.add('bad');
+      setFeed(fig, 'generated test', [{ text: 'A700' }], '<span class="expect">expects out of range</span>');
+      setNote(fig, 'The docs say rows 1 to 40. The test expects out of range and gets a crash, so the test fails.');
+    }
+  }
+
+  // Tab row and card selection.
+  function techniquesFor(id) {
+    return techs.filter(function (art) {
+      var t = art.getAttribute('data-tech');
+      return t === 'custom' || !!toolsFor(id)[t];
+    });
+  }
+
+  function stateFor(card) {
+    for (var i = 0; i < states.length; i++) if (states[i].card === card) return states[i];
+    return null;
+  }
+
+  function stopState(st) {
+    if (st.token) st.token.stop();
+    st.token = null;
+    st.running = false;
+  }
+
+  function selectTech(id) {
+    var card = null;
+    techs.forEach(function (art) {
+      if (art.getAttribute('data-tech') === id) card = art;
+    });
+    if (!card || !techniquesFor(current).some(function (a) { return a === card; })) {
+      var list = techniquesFor(current);
+      card = list[0];
+      id = card.getAttribute('data-tech');
+    }
+    currentTech = id;
+    techs.forEach(function (art) {
+      art.classList.toggle('shown', art === card);
+    });
+    var inp = tabsEl.querySelector('.tab-in[value="' + id + '"]');
+    if (inp && !inp.checked) inp.checked = true;
+    if (techLive) {
+      if (id === 'custom') techLive.textContent = 'Your own.';
+      else {
+        var name = card.querySelector('h3').textContent;
+        var tool = card.querySelector('[data-tool]');
+        techLive.textContent = name + ' with ' + (tool ? tool.textContent : '') + '.';
+      }
+    }
+    states.forEach(function (st) {
+      if (st.card !== card) stopState(st);
+    });
+    var st = stateFor(card);
+    if (st) {
+      stopState(st);
+      st.done = false;
+    }
+    if (canAnimate && st) {
+      var r = st.fig.getBoundingClientRect();
+      if (r.top < window.innerHeight && r.bottom > 0) startState(st);
+      else finalFrame(card);
+    } else {
+      finalFrame(card);
+    }
+  }
+
+  function setTarget(id) {
+    current = id;
+    codeView.innerHTML = TARGETS[id].code;
+    pickButtons.forEach(function (b) {
+      b.setAttribute('aria-pressed', String(b.getAttribute('data-target') === id));
+    });
+    var tools = toolsFor(id);
+    var list = [];
+    techs.forEach(function (art) {
+      var tech = art.getAttribute('data-tech');
+      var served = tech === 'custom' || !!tools[tech];
+      if (!served) { art.classList.remove('shown'); return; }
+      var tool = art.querySelector('[data-tool]');
+      if (tool && tools[tech]) tool.textContent = tools[tech];
+      list.push(art);
+    });
+    renderAll(id);
+    // Rebuild the row of technique tabs from the data for this target.
+    var keep = tabsLabel;
+    while (keep && keep.nextSibling) tabsEl.removeChild(keep.nextSibling);
+    list.forEach(function (art) {
+      var techId = art.getAttribute('data-tech');
+      var name = techId === 'custom' ? 'Your own' : art.querySelector('h3').textContent;
+      var input = document.createElement('input');
+      input.type = 'radio';
+      input.name = 'tech-tab-' + groupName;
+      input.id = 'tab-' + techId;
+      input.value = techId;
+      input.className = 'tab-in';
+      var label = document.createElement('label');
+      label.className = 'tab';
+      label.setAttribute('for', 'tab-' + techId);
+      label.textContent = name;
+      tabsEl.appendChild(input);
+      tabsEl.appendChild(label);
+    });
+    groupName++;
+    if (pickLive) {
+      var n = list.length - 1;
+      pickLive.textContent = TARGETS[id].name + '. ' + n + (n === 1 ? ' technique' : ' techniques') + ' plus your own.';
+    }
+    var label = document.querySelector('.program .card-label');
+    if (label) label.textContent = id === 'binary' ? 'The binary' : 'The program';
+    selectTech(list[0].getAttribute('data-tech'));
+  }
+
+  pickButtons.forEach(function (b) {
+    b.addEventListener('click', function () { setTarget(b.getAttribute('data-target')); });
+  });
+  tabsEl.addEventListener('change', function (e) {
+    if (e.target && e.target.classList && e.target.classList.contains('tab-in')) selectTech(e.target.value);
+  });
+
+  // The try box.
+  var form = document.querySelector('.try-form');
+  var input = document.getElementById('code-input');
+  var result = document.getElementById('result');
+  var codeOut = document.getElementById('result-code');
+  var msgOut = document.getElementById('result-msg');
+  var strip = document.getElementById('run-strip');
+  var hint = document.getElementById('try-hint');
+  var showme = document.getElementById('showme');
+  var showmeBtn = document.getElementById('showme-btn');
+  var pointdown = document.getElementById('pointdown');
+  var labels = ['4 chars', 'A7', 'digits', '≤ 40', 'table'];
+  var todo = ['todo', 'todo', 'todo', 'todo', 'todo'];
+  var tries = 0;
+  var crashFound = false;
+
+  function paint(steps) {
+    strip.innerHTML = '';
+    steps.forEach(function (state, i) {
+      var li = document.createElement('li');
+      li.textContent = labels[i];
+      if (state === 'pass') li.className = 'pass';
+      if (state === 'fail') li.className = 'fail';
+      strip.appendChild(li);
+    });
+  }
+
+  function run(value) {
+    var text = value;
+    codeOut.textContent = text || '····';
+    msgOut.className = 'result-msg';
+    if (!text) {
+      msgOut.textContent = 'Type a four-character input.';
+      paint(todo);
+      return 'empty';
+    }
+    if (text.length !== 4) {
+      msgOut.textContent = 'Check 1 stopped it. An input is exactly four characters.';
+      msgOut.classList.add('bad');
+      paint(['fail', 'todo', 'todo', 'todo', 'todo']);
+      return 'fail';
+    }
+    if (text.slice(0, 2) !== 'A7') {
+      msgOut.textContent = 'Check 2 stopped it. An input must start with A7.';
+      msgOut.classList.add('bad');
+      paint(['pass', 'fail', 'todo', 'todo', 'todo']);
+      return 'fail';
+    }
+    if (!/^[0-9][0-9]$/.test(text.slice(2))) {
+      msgOut.textContent = 'Check 3 stopped it. The last two characters must be digits 0 to 9.';
+      msgOut.classList.add('bad');
+      paint(['pass', 'pass', 'fail', 'todo', 'todo']);
+      return 'fail';
+    }
+    var n = Number(text.slice(2));
+    if (n > 40) {
+      msgOut.textContent = 'Check 4 stopped it. The table holds rows up to 40.';
+      msgOut.classList.add('bad');
+      paint(['pass', 'pass', 'pass', 'fail', 'todo']);
+      return 'fail';
+    }
+    if (n === 0) {
+      msgOut.textContent = 'It crashed at the last line. The table has no row 0.';
+      msgOut.classList.add('bad');
+      paint(['pass', 'pass', 'pass', 'pass', 'fail']);
+      return 'crash';
+    }
+    msgOut.textContent = 'It ran. It returns row ' + n + '.';
+    msgOut.classList.add('good');
+    paint(['pass', 'pass', 'pass', 'pass', 'pass']);
+    return 'pass';
+  }
+
+  function showPointer() {
+    if (pointdown) pointdown.hidden = false;
+    if (showme) showme.hidden = true;
+  }
+
+  function recordTry(value, outcomeName) {
+    if (!value.trim()) return;
+    tries++;
+    if (outcomeName === 'crash') crashFound = true;
+    if (crashFound) showPointer();
+    else if (tries >= 3 && showme) showme.hidden = false;
+  }
+
+  var userTook = !canAnimate;
+  if (!canAnimate) result.setAttribute('aria-live', 'polite');
+  var autoToken = 0;
+  var autoRunning = false;
+  var autoActive = false;
+  var startedAuto = false;
+
+  function takeOver(keepValue) {
+    var wasActive = autoActive;
+    userTook = true;
+    autoActive = false;
+    autoToken++;
+    if (hint) hint.textContent = 'The program says which check stopped you.';
+    result.setAttribute('aria-live', 'polite');
+    if (wasActive && !keepValue) {
+      input.value = '';
+      codeOut.textContent = '····';
+      msgOut.className = 'result-msg';
+      msgOut.textContent = 'Type a four-character input.';
+      paint(todo);
+    }
+  }
+
+  function waitAuto(ms, token) {
+    return new Promise(function (res, rej) {
+      setTimeout(function () { (token === autoToken) ? res() : rej('stop'); }, ms);
+    });
+  }
+
+  async function autoOnce() {
+    if (autoRunning || userTook || startedAuto) return;
+    autoRunning = true;
+    startedAuto = true;
+    autoActive = true;
+    var token = ++autoToken;
+    var guesses = ['HH12', 'A7X9', 'A741', 'A712'];
+    if (hint) hint.textContent = 'Trying a few inputs.';
+    try {
+      for (var g = 0; g < guesses.length; g++) {
+        var text = guesses[g];
+        input.value = '';
+        codeOut.textContent = '····';
+        msgOut.className = 'result-msg';
+        msgOut.textContent = '';
+        paint(todo);
+        for (var i = 1; i <= text.length; i++) {
+          input.value = text.slice(0, i);
+          await waitAuto(110, token);
+        }
+        run(text);
+        if (g < guesses.length - 1) await waitAuto(1700, token);
+      }
+      if (!userTook && hint) hint.textContent = 'Your turn. Type a four-character input.';
+    } catch (err) { /* the visitor took over */ }
+    autoActive = false;
+    autoRunning = false;
+  }
+
+  if (form) form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    takeOver(true);
+    var value = input.value;
+    var outcomeName = run(value);
+    recordTry(value, outcomeName);
+  });
+
+  if (showmeBtn) showmeBtn.addEventListener('click', function () {
+    takeOver(true);
+    input.value = 'A700';
+    var outcomeName = run('A700');
+    recordTry('A700', outcomeName);
+    crashFound = true;
+    showPointer();
+  });
+
+  ['pointerdown', 'focus', 'keydown', 'click'].forEach(function (ev) {
+    input.addEventListener(ev, function () { takeOver(false); });
+  });
+  input.addEventListener('input', function () { takeOver(true); });
+  var tryCard = document.getElementById('try-card');
+  tryCard.addEventListener('pointerdown', function (e) {
+    if (e.target !== input && !e.target.closest('button')) takeOver(false);
+  });
+
+  var states = [];
+  if (canAnimate) {
+    techs.forEach(function (article) {
+      var fig = article.querySelector('[data-viz]');
+      if (!fig) return;
+      var state = { fig: fig, card: article, tech: article.getAttribute('data-tech'), token: null, running: false, done: false };
+      states.push(state);
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            if (article.classList.contains('shown')) startState(state);
+          } else if (state.token) {
+            state.token.stop();
+            state.token = null;
+            state.running = false;
+          }
+        });
+      }, { threshold: 0.25 });
+      io.observe(fig);
+    });
+    var tryIO = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) { if (entry.isIntersecting) autoOnce(); });
+    }, { threshold: 0.4 });
+    tryIO.observe(tryCard);
+  }
+
+  function startState(state) {
+    if (!canAnimate || state.running || state.done) return;
+    if (!state.card.classList.contains('shown')) return;
+    state.running = true;
+    var token = ctl();
+    state.token = token;
+    players[state.tech](state.fig, token).then(function () {
+      if (state.token === token) { state.running = false; state.done = true; }
+    }).catch(function () {
+      if (state.token === token) state.running = false;
+    });
+  }
+
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest ? e.target.closest('[data-replay]') : null;
+    if (!btn) return;
+    var article = btn.closest('article.tech');
+    var st = stateFor(article);
+    if (!st) return;
+    stopState(st);
+    st.done = false;
+    startState(st);
+  });
+
+  function visibleCustom() {
+    for (var i = 0; i < techs.length; i++) {
+      if (techs[i].getAttribute('data-tech') === 'custom' && techs[i].classList.contains('shown')) return techs[i];
+    }
+    return null;
+  }
+
+  var customResize = 0;
+  window.addEventListener('resize', function () {
+    clearTimeout(customResize);
+    customResize = setTimeout(function () {
+      var card = visibleCustom();
+      if (!card) return;
+      var st = stateFor(card);
+      if (st && st.running) {
+        stopState(st);
+        st.done = false;
+        if (canAnimate) startState(st); else finalFrame(card);
+      } else {
+        if (st) st.done = false;
+        finalFrame(card);
+      }
+    }, 160);
+  });
+
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(function () {
+      var card = visibleCustom();
+      if (!card) return;
+      var st = stateFor(card);
+      if (!st || !st.running) finalFrame(card);
+    });
+  }
+
+  setTarget('c');
+})();
+document.addEventListener('click', function (e) {
+  var b = e.target.closest ? e.target.closest('[data-theme-toggle]') : null;
+  if (!b) return;
+  var root = document.documentElement, dark = root.getAttribute('data-theme') !== 'dark';
+  if (dark) root.setAttribute('data-theme', 'dark'); else root.removeAttribute('data-theme');
+  try { localStorage.setItem('theme', dark ? 'dark' : 'light'); } catch (err) {}
+});
+</script>
+</body>
+</html>
