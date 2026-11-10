@@ -1,6 +1,6 @@
 # Tests of the Agolic page
 
-The page is one hand-written `index.html` with a logo and fonts. These tests guard what a visitor cares about and nothing else, so wording, colours and layout may change freely.
+The page is one hand-written `index.html` with a logo, fonts and the rubbing behind its first screen. These tests guard what a visitor cares about and nothing else, so wording, colours and layout may change freely.
 
 ## What must never break
 

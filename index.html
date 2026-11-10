@@ -308,6 +308,7 @@ i.dot{display:block;width:5px;height:5px;border-radius:50%;background:var(--hl);
 }
 .no-js .replay{display:none}
 </style>
+<link rel="stylesheet" href="rubbing-hero/rubbing-hero.css">
 </head>
 <body>
 <header class="mast">
@@ -325,6 +326,10 @@ i.dot{display:block;width:5px;height:5px;border-radius:50%;background:var(--hl);
 </header>
 
 <main>
+<div class="rub-hero" data-rubbing-hero role="img" aria-label="A crayon rubbing in which a program's paths come up through the paper and bugs turn up at their ends">
+  <canvas></canvas>
+  <noscript><picture><source media="(max-width: 700px)" srcset="rubbing-hero/rubbing-still-narrow.webp"><img src="rubbing-hero/rubbing-still-wide.webp" alt="" width="1425" height="900"></picture></noscript>
+</div>
 <section class="sec" aria-labelledby="puzzle-h">
   <div class="wrap">
     <p class="kicker">How Agolic tests your program</p>
@@ -2059,5 +2064,6 @@ document.addEventListener('click', function (e) {
   try { localStorage.setItem('theme', dark ? 'dark' : 'light'); } catch (err) {}
 });
 </script>
+<script src="rubbing-hero/rubbing-hero.js" defer></script>
 </body>
 </html>

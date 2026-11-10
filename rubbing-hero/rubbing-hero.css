@@ -1,0 +1,39 @@
+/* Agolic rubbing hero: one sheet behind the first screen, under the page's own header and headline. */
+.rub-hero {
+  --rub-paper: var(--ground, #fff);
+  --rub-ink: var(--fg, #14213a);
+  --rub-agent: var(--hl, #ad1b98);
+  --rub-bug: var(--bug, #c43b46);
+  --rub-visitor: #359a58;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100vh;
+  height: 100svh;
+  overflow: hidden;
+  pointer-events: none;
+  contain: strict;
+}
+.rub-hero canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity .9s ease;
+}
+.rub-hero.is-on canvas { opacity: 1; }
+.rub-hero img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 70% 0;
+}
+/* A finger that moves sideways rubs the sheet; up and down still scroll the page and two fingers still zoom. */
+.mast, main > section:first-of-type { touch-action: pan-y pinch-zoom; }
+@media (prefers-reduced-motion: reduce) {
+  .rub-hero canvas { transition: none; }
+}
